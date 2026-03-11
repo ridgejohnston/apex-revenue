@@ -34,29 +34,9 @@ html, body { width:100%; height:100%; overflow:hidden; background:transparent; f
 .nav-icon { font-size:15px; }
 body.minimised #overlay-content, body.minimised .bottom-nav { display:none; }
 body.minimised #overlay-shell { height:auto; }
-#whale-toast {
-  position:fixed; top:14px; left:50%; transform:translateX(-50%) translateY(-8px);
-  background:linear-gradient(135deg,#1a0f00,#2a1500);
-  border:1px solid rgba(255,209,102,0.5); border-radius:10px; padding:8px 14px;
-  z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.8),0 0 16px rgba(255,209,102,0.2);
-  display:none; align-items:center; gap:8px; font-family:'Manrope',sans-serif;
-  min-width:180px; max-width:320px; opacity:0; pointer-events:none;
-  transition:opacity 0.25s ease, transform 0.25s ease;
-}
-#whale-toast.show { display:flex; opacity:1; transform:translateX(-50%) translateY(0); }
-#whale-toast-icon { font-size:18px; flex-shrink:0; }
-#whale-toast-title { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#ffd166; margin-bottom:2px; }
-#whale-toast-body { font-size:11px; color:#f0eeff; }
 </style>
 </head>
 <body>
-<div id="whale-toast">
-  <span id="whale-toast-icon">🐋</span>
-  <div>
-    <div id="whale-toast-title">WHALE ALERT</div>
-    <div id="whale-toast-body">A whale just joined!</div>
-  </div>
-</div>
 <div id="overlay-shell">
   <div id="drag-handle">
     <div class="handle-left">
@@ -79,6 +59,15 @@ body.minimised #overlay-shell { height:auto; }
   </div>
 </div>
 
+<!--
+  PostHog Session Replay Integration (v0.6.0)
+  Load order:
+    1. posthog.js        — full PostHog IIFE library (sets window.posthog)
+    2. posthog-init.js   — patches recorder loader, calls posthog.init()
+    3. overlay.js        — main overlay UI logic
+-->
+<script src="posthog.js"></script>
+<script src="posthog-init.js"></script>
 <script src="overlay.js"></script>
 </body>
 </html>
