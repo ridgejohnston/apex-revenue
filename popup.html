@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apex Revenue</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <script type="module" crossorigin src="/popup.js"></script>
+  <link rel="stylesheet" crossorigin href="/popup.css">
+</head>
+<body>
+
+  <div class="popup">
+    <div class="corner-glow"></div>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <img src="/icon128.png" alt="Apex Revenue" class="logo-img" />
+        <div class="logo-sub">Creator Intelligence</div>
+      </div>
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        LIVE
+      </div>
+    </div>
+
+    <!-- Live Page -->
+    <div id="page-live" class="popup-scroll">
+
+      <!-- Alert / Monetization Prompt -->
+      <div class="alert-banner">
+        <div class="alert-icon">🔥</div>
+        <div class="alert-content">
+          <div class="alert-label">High Tip Moment</div>
+          <div class="alert-text">3 whales in chat — launch a goal now</div>
+        </div>
+        <button class="alert-cta">Act Now</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card tips">
+          <div class="stat-label">Tokens</div>
+          <div class="stat-value">$342<span>/hr</span></div>
+          <div class="stat-change up">↑ 28% vs avg</div>
+        </div>
+        <div class="stat-card viewers">
+          <div class="stat-label">Viewers</div>
+          <div class="stat-value">1.2<span>k</span></div>
+          <div class="stat-change up">↑ peak now</div>
+        </div>
+        <div class="stat-card conv">
+          <div class="stat-label">Conv. Rate</div>
+          <div class="stat-value">4.7<span>%</span></div>
+          <div class="stat-change up">↑ 1.2% lift</div>
+        </div>
+      </div>
+
+      <!-- Whale Tracker -->
+      <div class="whale-section">
+        <div class="section-header">
+          <div class="section-title">🐋 Whale Tracker</div>
+          <a class="section-link">3 in room</a>
+        </div>
+        <div class="whale-table">
+          <div class="whale-table-header">
+            <div class="whale-col-label">Viewer</div>
+            <div class="whale-col-label" style="text-align:right">Tips (Session)</div>
+            <div class="whale-col-label center">Joins</div>
+            <div class="whale-col-label center">Leaves</div>
+          </div>
+          <div class="whale-row in-room">
+            <div class="whale-identity">
+              <div class="whale-avatar tier-1">🐋<div class="whale-status-dot online"></div></div>
+              <div class="whale-name-wrap">
+                <div class="whale-name">BigSpender99</div>
+                <div class="whale-rank">#1 tipper · Gold</div>
+              </div>
+            </div>
+            <div class="whale-tips">$248</div>
+            <div class="whale-count joins"><span class="whale-count-val">4</span></div>
+            <div class="whale-count leaves"><span class="whale-count-val">3</span></div>
+          </div>
+          <div class="whale-row in-room">
+            <div class="whale-identity">
+              <div class="whale-avatar tier-2">💎<div class="whale-status-dot online"></div></div>
+              <div class="whale-name-wrap">
+                <div class="whale-name">RichViewer42</div>
+                <div class="whale-rank">#2 tipper · Silver</div>
+              </div>
+            </div>
+            <div class="whale-tips">$115</div>
+            <div class="whale-count joins"><span class="whale-count-val">2</span></div>
+            <div class="whale-count leaves"><span class="whale-count-val">1</span></div>
+          </div>
+          <div class="whale-row in-room">
+            <div class="whale-identity">
+              <div class="whale-avatar tier-1">🔥<div class="whale-status-dot online"></div></div>
+              <div class="whale-name-wrap">
+                <div class="whale-name">KingTipper</div>
+                <div class="whale-rank">#3 tipper · Gold</div>
+              </div>
+            </div>
+            <div class="whale-tips">$90</div>
+            <div class="whale-count joins"><span class="whale-count-val">3</span></div>
+            <div class="whale-count leaves"><span class="whale-count-val">2</span></div>
+          </div>
+          <div class="whale-row left">
+            <div class="whale-identity">
+              <div class="whale-avatar tier-3">👑<div class="whale-status-dot offline"></div></div>
+              <div class="whale-name-wrap">
+                <div class="whale-name">CryptoWhale7</div>
+                <div class="whale-rank">Left 4m ago · Bronze</div>
+              </div>
+            </div>
+            <div class="whale-tips">$55</div>
+            <div class="whale-count joins"><span class="whale-count-val">1</span></div>
+            <div class="whale-count leaves"><span class="whale-count-val">1</span></div>
+          </div>
+        </div>
+        <div class="whale-section-footer">
+          <span class="whale-total-label">Whale total this session</span>
+          <span class="whale-total-val">$508</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Monetization Prompts -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Monetization Prompts</div>
+          <a class="section-link">See all</a>
+        </div>
+        <div class="prompt-card hot">
+          <div class="prompt-emoji">💰</div>
+          <div class="prompt-content">
+            <div class="prompt-action">Announce exclusive 1-on-1 slot</div>
+            <div class="prompt-meta">Highest ROI • 3 buyers likely</div>
+          </div>
+          <div class="prompt-value">+$80</div>
+        </div>
+        <div class="prompt-card medium">
+          <div class="prompt-emoji">🎯</div>
+          <div class="prompt-content">
+            <div class="prompt-action">Drop tip menu reminder</div>
+            <div class="prompt-meta">Viewer attention spike detected</div>
+          </div>
+          <div class="prompt-value">+$45</div>
+        </div>
+        <div class="prompt-card cool">
+          <div class="prompt-emoji">✨</div>
+          <div class="prompt-content">
+            <div class="prompt-action">Engage lurkers with a poll</div>
+            <div class="prompt-meta">Converts passive → active</div>
+          </div>
+          <div class="prompt-value">+$22</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Viewer Engagement Heat -->
+      <div class="heat-section">
+        <div class="section-header">
+          <div class="section-title">Viewer Engagement Heat</div>
+        </div>
+        <div class="heat-bar-wrap">
+          <div class="heat-label-row">
+            <span class="heat-name">Low activity</span>
+            <span class="heat-name" style="color: var(--gold)">⚡ Peak now</span>
+          </div>
+          <div class="heat-bars">
+            <div class="heat-bar" style="height:30%; background:linear-gradient(to top,#2a2a3a,#3a3a50)"></div>
+            <div class="heat-bar" style="height:40%; background:linear-gradient(to top,#2a2a3a,#4a3a60)"></div>
+            <div class="heat-bar" style="height:35%; background:linear-gradient(to top,#2a2a3a,#3a3a50)"></div>
+            <div class="heat-bar" style="height:55%; background:linear-gradient(to top,#3a2a4a,#7c4a9a)"></div>
+            <div class="heat-bar" style="height:45%; background:linear-gradient(to top,#2a2a3a,#5a3a7a)"></div>
+            <div class="heat-bar" style="height:70%; background:linear-gradient(to top,#4a1a3a,#c0306e)"></div>
+            <div class="heat-bar" style="height:85%; background:linear-gradient(to top,#5a1a2a,#e03060)"></div>
+            <div class="heat-bar" style="height:100%; background:linear-gradient(to top,#6a0a20,var(--accent)); box-shadow:0 0 12px var(--glow)"></div>
+            <div class="heat-bar" style="height:90%; background:linear-gradient(to top,#5a1a2a,#e03060)"></div>
+            <div class="heat-bar" style="height:75%; background:linear-gradient(to top,#4a1a3a,#c0306e)"></div>
+            <div class="heat-bar" style="height:60%; background:linear-gradient(to top,#3a1a3a,#9a3a8a)"></div>
+            <div class="heat-bar" style="height:50%; background:linear-gradient(to top,#2a2a3a,#6a4a8a)"></div>
+          </div>
+          <div class="heat-time">
+            <span>8pm</span><span>9pm</span><span>10pm</span><span>11pm</span><span>Now</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Price Recommendation -->
+      <div class="pricing-section">
+        <div class="section-header">
+          <div class="section-title">AI Price Recommendation</div>
+        </div>
+        <div class="pricing-card">
+          <div class="pricing-row">
+            <div class="pricing-item">
+              <div class="pricing-type">Current</div>
+              <div class="pricing-amount current">$8</div>
+            </div>
+            <div class="pricing-divider"></div>
+            <div class="pricing-item">
+              <div class="pricing-type">Recommended</div>
+              <div class="pricing-amount recommended">$15</div>
+            </div>
+            <div class="pricing-divider"></div>
+            <div class="pricing-item">
+              <div class="pricing-type">Max Tested</div>
+              <div class="pricing-amount max">$22</div>
+            </div>
+          </div>
+          <div class="ai-insight">
+            <div class="ai-icon">🤖</div>
+            <div class="ai-text">Your audience converted at $15 last Thursday — demand tonight is 40% higher. Consider raising your tip floor now.</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end page-live -->
+
+    <!-- Fans Page -->
+    <div id="page-fans" class="popup-scroll" style="display:none;">
+      <div class="fans-header">
+        <div class="fans-title-row">
+          <div>
+            <div class="fans-title">Fan Leaderboard</div>
+            <div class="fans-subtitle">Ranked by session tip volume</div>
+          </div>
+          <div class="fans-summary">
+            <div class="fans-summary-val">$1,247</div>
+            <div class="fans-summary-label">Total session tips</div>
+          </div>
+        </div>
+        <div class="fan-filters">
+          <div class="fan-chip active">All</div>
+          <div class="fan-chip">In Room</div>
+          <div class="fan-chip">Top Tippers</div>
+          <div class="fan-chip">New</div>
+        </div>
+      </div>
+      <div class="fans-list">
+        <div class="fan-table-head">
+          <div class="fan-col rank">#</div>
+          <div class="fan-col user">User</div>
+          <div class="fan-col tips-col">Tips</div>
+          <div class="fan-col cnt">In</div>
+          <div class="fan-col cnt">Out</div>
+        </div>
+        <div class="fan-row">
+          <div class="fan-col rank"><span class="rank-num gold-rank">1</span></div>
+          <div class="fan-col user">
+            <div class="fan-avatar av1">B</div>
+            <div class="fan-info">
+              <div class="fan-name">BigSpender99</div>
+              <div class="fan-badges">
+                <span class="badge badge-whale">🐋 Whale</span>
+                <span class="badge badge-gold">🥇 Gold</span>
+                <span class="badge badge-loyal">🔁 Loyal</span>
+              </div>
+            </div>
+            <div class="fan-presence online-dot"></div>
+          </div>
+          <div class="fan-col tips-col"><span class="tip-amt top">$248</span></div>
+          <div class="fan-col cnt"><span class="cnt-in">4</span></div>
+          <div class="fan-col cnt"><span class="cnt-out">3</span></div>
+        </div>
+        <div class="fan-row">
+          <div class="fan-col rank"><span class="rank-num silver-rank">2</span></div>
+          <div class="fan-col user">
+            <div class="fan-avatar av2">R</div>
+            <div class="fan-info">
+              <div class="fan-name">RichViewer42</div>
+              <div class="fan-badges">
+                <span class="badge badge-whale">🐋 Whale</span>
+                <span class="badge badge-silver">🥈 Silver</span>
+              </div>
+            </div>
+            <div class="fan-presence online-dot"></div>
+          </div>
+          <div class="fan-col tips-col"><span class="tip-amt top">$115</span></div>
+          <div class="fan-col cnt"><span class="cnt-in">2</span></div>
+          <div class="fan-col cnt"><span class="cnt-out">1</span></div>
+        </div>
+        <div class="fan-row">
+          <div class="fan-col rank"><span class="rank-num gold-rank">3</span></div>
+          <div class="fan-col user">
+            <div class="fan-avatar av3">K</div>
+            <div class="fan-info">
+              <div class="fan-name">KingTipper</div>
+              <div class="fan-badges">
+                <span class="badge badge-whale">🐋 Whale</span>
+                <span class="badge badge-gold">🥇 Gold</span>
+              </div>
+            </div>
+            <div class="fan-presence online-dot"></div>
+          </div>
+          <div class="fan-col tips-col"><span class="tip-amt top">$90</span></div>
+          <div class="fan-col cnt"><span class="cnt-in">3</span></div>
+          <div class="fan-col cnt"><span class="cnt-out">2</span></div>
+        </div>
+        <div class="fan-row faded">
+          <div class="fan-col rank"><span class="rank-num bronze-rank">4</span></div>
+          <div class="fan-col user">
+            <div class="fan-avatar av4">C</div>
+            <div class="fan-info">
+              <div class="fan-name">CryptoWhale7</div>
+              <div class="fan-badges">
+                <span class="badge badge-bronze">🥉 Bronze</span>
+                <span class="badge badge-left">↩ Left</span>
+              </div>
+            </div>
+            <div class="fan-presence offline-dot"></div>
+          </div>
+          <div class="fan-col tips-col"><span class="tip-amt">$55</span></div>
+          <div class="fan-col cnt"><span class="cnt-in">1</span></div>
+          <div class="fan-col cnt"><span class="cnt-out">1</span></div>
+        </div>
+        <div class="fan-row">
+          <div class="fan-col rank"><span class="rank-num">5</span></div>
+          <div class="fan-col user">
+            <div class="fan-avatar av5">N</div>
+            <div class="fan-info">
+              <div class="fan-name">NightOwl88</div>
+              <div class="fan-badges">
+                <span class="badge badge-silver">🥈 Silver</span>
+                <span class="badge badge-new">✨ New</span>
+              </div>
+            </div>
+            <div class="fan-presence online-dot"></div>
+          </div>
+          <div class="fan-col tips-col"><span class="tip-amt">$42</span></div>
+          <div class="fan-col cnt"><span class="cnt-in">1</span></div>
+          <div class="fan-col cnt"><span class="cnt-out">0</span></div>
+        </div>
+        <div class="fan-row">
+          <div class="fan-col rank"><span class="rank-num">6</span></div>
+          <div class="fan-col user">
+            <div class="fan-avatar av6">S</div>
+            <div class="fan-info">
+              <div class="fan-name">SilentTipper</div>
+              <div class="fan-badges">
+                <span class="badge badge-bronze">🥉 Bronze</span>
+                <span class="badge badge-loyal">🔁 Loyal</span>
+              </div>
+            </div>
+            <div class="fan-presence online-dot"></div>
+          </div>
+          <div class="fan-col tips-col"><span class="tip-amt">$38</span></div>
+          <div class="fan-col cnt"><span class="cnt-in">5</span></div>
+          <div class="fan-col cnt"><span class="cnt-out">4</span></div>
+        </div>
+        <div class="fan-row faded">
+          <div class="fan-col rank"><span class="rank-num">7</span></div>
+          <div class="fan-col user">
+            <div class="fan-avatar av7">T</div>
+            <div class="fan-info">
+              <div class="fan-name">TipMaster21</div>
+              <div class="fan-badges">
+                <span class="badge badge-bronze">🥉 Bronze</span>
+                <span class="badge badge-left">↩ Left</span>
+              </div>
+            </div>
+            <div class="fan-presence offline-dot"></div>
+          </div>
+          <div class="fan-col tips-col"><span class="tip-amt">$29</span></div>
+          <div class="fan-col cnt"><span class="cnt-in">2</span></div>
+          <div class="fan-col cnt"><span class="cnt-out">2</span></div>
+        </div>
+        <div class="fan-row">
+          <div class="fan-col rank"><span class="rank-num">8</span></div>
+          <div class="fan-col user">
+            <div class="fan-avatar av8">V</div>
+            <div class="fan-info">
+              <div class="fan-name">VIPFan007</div>
+              <div class="fan-badges">
+                <span class="badge badge-new">✨ New</span>
+              </div>
+            </div>
+            <div class="fan-presence online-dot"></div>
+          </div>
+          <div class="fan-col tips-col"><span class="tip-amt">$18</span></div>
+          <div class="fan-col cnt"><span class="cnt-in">1</span></div>
+          <div class="fan-col cnt"><span class="cnt-out">0</span></div>
+        </div>
+        <div class="fan-row">
+          <div class="fan-col rank"><span class="rank-num">9</span></div>
+          <div class="fan-col user">
+            <div class="fan-avatar av9">L</div>
+            <div class="fan-info">
+              <div class="fan-name">LuckyCharm9</div>
+              <div class="fan-badges">
+                <span class="badge badge-new">✨ New</span>
+              </div>
+            </div>
+            <div class="fan-presence online-dot"></div>
+          </div>
+          <div class="fan-col tips-col"><span class="tip-amt">$12</span></div>
+          <div class="fan-col cnt"><span class="cnt-in">1</span></div>
+          <div class="fan-col cnt"><span class="cnt-out">0</span></div>
+        </div>
+        <div class="fan-row faded">
+          <div class="fan-col rank"><span class="rank-num">10</span></div>
+          <div class="fan-col user">
+            <div class="fan-avatar av10">D</div>
+            <div class="fan-info">
+              <div class="fan-name">DarkHorse55</div>
+              <div class="fan-badges">
+                <span class="badge badge-left">↩ Left</span>
+              </div>
+            </div>
+            <div class="fan-presence offline-dot"></div>
+          </div>
+          <div class="fan-col tips-col"><span class="tip-amt">$8</span></div>
+          <div class="fan-col cnt"><span class="cnt-in">1</span></div>
+          <div class="fan-col cnt"><span class="cnt-out">1</span></div>
+        </div>
+      </div>
+    </div><!-- end page-fans -->
+
+    <!-- Placeholder pages -->
+    <div id="page-analytics" class="popup-scroll placeholder-page" style="display:none;">
+      <div class="placeholder-icon">📊</div>
+      <div class="placeholder-label">Analytics</div>
+      <div class="placeholder-sub">Session insights &amp; trends coming soon</div>
+    </div>
+    <div id="page-strategy" class="popup-scroll placeholder-page" style="display:none;">
+      <div class="placeholder-icon">🎯</div>
+      <div class="placeholder-label">Strategy</div>
+      <div class="placeholder-sub">AI show strategy recommendations</div>
+    </div>
+    <div id="page-settings" class="popup-scroll placeholder-page" style="display:none;">
+      <div class="placeholder-icon">⚙️</div>
+      <div class="placeholder-label">Settings</div>
+      <div class="placeholder-sub">Configure Apex Revenue preferences</div>
+    </div>
+
+    <!-- Help Page -->
+    <div id="page-help" class="popup-scroll" style="display:none;">
+      <div class="help-header">
+        <div class="help-title">Help & Support</div>
+        <div class="help-subtitle">Get the most out of Apex Revenue</div>
+      </div>
+
+      <!-- Quick Start -->
+      <div class="help-section">
+        <div class="help-section-label">Quick Start</div>
+        <div class="help-card">
+          <div class="help-card-icon">⚡</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Live Tab</div>
+            <div class="help-card-text">Monitor real-time stats, whale activity, and get AI-powered monetization prompts during your stream.</div>
+          </div>
+        </div>
+        <div class="help-card">
+          <div class="help-card-icon">🐋</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Whale Tracker</div>
+            <div class="help-card-text">Whales are your top-spending viewers. Track when they join and leave so you can time your best offers.</div>
+          </div>
+        </div>
+        <div class="help-card">
+          <div class="help-card-icon">💜</div>
+          <div class="help-card-body">
+            <div class="help-card-title">Fan Leaderboard</div>
+            <div class="help-card-text">All tippers ranked by session volume. Badges indicate tier (Gold, Silver, Bronze), loyalty, and presence.</div>
+          </div>
+        </div>
+        <div class="help-card">
+          <div class="help-card-icon">🤖</div>
+          <div class="help-card-body">
+            <div class="help-card-title">AI Price Recommendation</div>
+            <div class="help-card-text">Apex learns from your audience over time and recommends optimal pricing based on demand signals.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Badge Legend -->
+      <div class="help-section">
+        <div class="help-section-label">Badge Legend</div>
+        <div class="badge-legend">
+          <div class="badge-legend-row">
+            <span class="badge badge-whale">🐋 Whale</span>
+            <span class="badge-legend-desc">Top spender, $50+ tipped</span>
+          </div>
+          <div class="badge-legend-row">
+            <span class="badge badge-gold">🥇 Gold</span>
+            <span class="badge-legend-desc">Elite tier tipper</span>
+          </div>
+          <div class="badge-legend-row">
+            <span class="badge badge-silver">🥈 Silver</span>
+            <span class="badge-legend-desc">Mid-tier regular</span>
+          </div>
+          <div class="badge-legend-row">
+            <span class="badge badge-bronze">🥉 Bronze</span>
+            <span class="badge-legend-desc">Entry-tier supporter</span>
+          </div>
+          <div class="badge-legend-row">
+            <span class="badge badge-loyal">🔁 Loyal</span>
+            <span class="badge-legend-desc">Returning across sessions</span>
+          </div>
+          <div class="badge-legend-row">
+            <span class="badge badge-new">✨ New</span>
+            <span class="badge-legend-desc">First session tipper</span>
+          </div>
+          <div class="badge-legend-row">
+            <span class="badge badge-left">↩ Left</span>
+            <span class="badge-legend-desc">No longer in room</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Recommendations -->
+      <div class="help-section">
+        <div class="help-section-label">💡 Suggest a Feature</div>
+        <div class="feature-request-card">
+          <div class="feature-request-intro">Have an idea that would make Apex Revenue better for you? We build based on creator feedback.</div>
+          <div class="feature-form">
+            <div class="feature-form-group">
+              <label class="feature-label">Your idea</label>
+              <textarea class="feature-textarea" id="featureText" placeholder="e.g. Show a countdown timer when a whale is about to leave..."></textarea>
+            </div>
+            <div class="feature-form-group">
+              <label class="feature-label">Category</label>
+              <div class="feature-chips">
+                <div class="feature-chip active" data-cat="monetization">💰 Monetization</div>
+                <div class="feature-chip" data-cat="analytics">📊 Analytics</div>
+                <div class="feature-chip" data-cat="fans">💜 Fans</div>
+                <div class="feature-chip" data-cat="ui">🎨 UI/UX</div>
+                <div class="feature-chip" data-cat="other">✨ Other</div>
+              </div>
+            </div>
+            <button class="feature-submit" id="featureSubmit">Submit Idea</button>
+            <div class="feature-success" id="featureSuccess">
+              <span>🎉</span> Thanks! Your idea has been submitted.
+            </div>
+            <div class="feature-error" id="featureError">
+              <span>⚠️</span> Failed to send. Please try again.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="help-section">
+        <div class="help-section-label">Support</div>
+        <div class="help-contact-card">
+          <div class="help-contact-icon">💬</div>
+          <div>
+            <div class="help-contact-title">Need help?</div>
+            <div class="help-contact-sub">Reach out at <span class="help-link">support@apexrevenue.io</span></div>
+          </div>
+        </div>
+        <div class="help-version">Apex Revenue v0.5.1 · Creator Intelligence Engine</div>
+      </div>
+
+    </div><!-- end page-help -->
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+      <div class="nav-item active" onclick="showPage('live', this)">
+        <div class="nav-icon">⚡</div>Live
+      </div>
+      <div class="nav-item" onclick="showPage('analytics', this)">
+        <div class="nav-icon">📊</div>Analytics
+      </div>
+      <div class="nav-item" onclick="showPage('fans', this)">
+        <div class="nav-icon">💜</div>Fans
+      </div>
+      <div class="nav-item" onclick="showPage('settings', this)">
+        <div class="nav-icon">⚙️</div>Settings
+      </div>
+      <div class="nav-item" onclick="showPage('help', this)">
+        <div class="nav-icon">❓</div>Help
+      </div>
+    </div>
+
+  </div><!-- end popup -->
+
+
+</body>
+</html>
