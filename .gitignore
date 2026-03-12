@@ -54,3 +54,39 @@ coverage/
 *.tmp
 *.bak
 *.orig
+
+# Node
+node_modules/
+
+# Build folders
+dist/
+build/
+
+# Environment files
+.env
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dropbox conflicts
+*.dropbox
+
+# Chrome extension packaging
+*.zip
+
+*conflicted copy*
+
+node_modules/
+dist/
+build/
+.env
+*.log
+.DS_Store
+Thumbs.db
+*.zip
+*conflicted copy*
+*.dropbox
