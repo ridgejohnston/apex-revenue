@@ -1,0 +1,22 @@
+{
+  "name": "apex-revenue",
+  "version": "0.6.0",
+  "description": "Creator intelligence engine for cam performers. Real-time monetization prompts, whale tracking, fan leaderboards, and multi-platform support.",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Copy src files to dist/' && cp -r src/* dist/",
+    "watch": "echo 'Run apex-watch.ps1 on Windows to auto-push changes'"
+  },
+  "devDependencies": {
+    "web-ext": "^7.11.0"
+  },
+  "keywords": [
+    "chrome-extension",
+    "cam",
+    "monetization",
+    "chaturbate",
+    "stripchat"
+  ],
+  "author": "Ridge Johnston",
+  "license": "UNLICENSED"
+}
