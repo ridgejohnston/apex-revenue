@@ -109,10 +109,10 @@ function getLivePage() { return `
   <div class="section-hdr"><div class="section-ttl">🐋 Whale Tracker</div><span class="section-lnk">3 in room</span></div>
   <div class="whale-table">
     <div class="whale-thead"><div class="whale-th">Viewer</div><div class="whale-th" style="text-align:right">Tips</div><div class="whale-th c">In</div><div class="whale-th c">Out</div></div>
-    <div class="whale-row"><div class="whale-id"><div class="av t1">🐋<div class="sd on"></div></div><div><div class="wname">BigSpender99</div><div class="wrank">#1 · Gold</div></div></div><div class="wtips">$248</div><div class="wc">4</div><div class="wc">3</div></div>
-    <div class="whale-row"><div class="whale-id"><div class="av t2">💎<div class="sd on"></div></div><div><div class="wname">RichViewer42</div><div class="wrank">#2 · Silver</div></div></div><div class="wtips">$115</div><div class="wc">2</div><div class="wc">1</div></div>
-    <div class="whale-row"><div class="whale-id"><div class="av t1">🔥<div class="sd on"></div></div><div><div class="wname">KingTipper</div><div class="wrank">#3 · Gold</div></div></div><div class="wtips">$90</div><div class="wc">3</div><div class="wc">2</div></div>
-    <div class="whale-row left"><div class="whale-id"><div class="av t3">👑<div class="sd off"></div></div><div><div class="wname">CryptoWhale7</div><div class="wrank">Left 4m ago</div></div></div><div class="wtips">$55</div><div class="wc">1</div><div class="wc">1</div></div>
+    <div class="whale-row"><div class="whale-id"><div class="av t1" style="font-size:10px;font-weight:700;color:#fff">B<div class="sd on"></div></div><div><div class="wname">BigSpender99</div><div class="wrank">#1 · Gold</div></div></div><div class="wtips">$248</div><div class="wc">4</div><div class="wc">3</div></div>
+    <div class="whale-row"><div class="whale-id"><div class="av t2" style="font-size:10px;font-weight:700;color:#fff">R<div class="sd on"></div></div><div><div class="wname">RichViewer42</div><div class="wrank">#2 · Silver</div></div></div><div class="wtips">$115</div><div class="wc">2</div><div class="wc">1</div></div>
+    <div class="whale-row"><div class="whale-id"><div class="av t1" style="font-size:10px;font-weight:700;color:#fff">K<div class="sd on"></div></div><div><div class="wname">KingTipper</div><div class="wrank">#3 · Gold</div></div></div><div class="wtips">$90</div><div class="wc">3</div><div class="wc">2</div></div>
+    <div class="whale-row left"><div class="whale-id"><div class="av t3" style="font-size:10px;font-weight:700;color:#fff">C<div class="sd off"></div></div><div><div class="wname">CryptoWhale7</div><div class="wrank">Left room</div></div></div><div class="wtips">$55</div><div class="wc">1</div><div class="wc">1</div></div>
   </div>
   <div class="whale-footer"><span class="wftl">Session total</span><span class="wftv">$508</span></div>
 </div>
@@ -193,7 +193,7 @@ function getFansPage() { return `
   <div class="fchips">
     <div class="fchip active" data-filter="all">All</div>
     <div class="fchip" data-filter="inroom">In Room</div>
-    <div class="fchip" data-filter="top30">Top 30d</div>
+    <div class="fchip" data-filter="top30">Top Tippers</div>
     <div class="fchip" data-filter="new">New</div>
   </div>
 </div>
@@ -213,85 +213,102 @@ function getHelpPage() { return `
 .hp-card-ttl{font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px}
 .hp-card-tx{font-size:9px;color:var(--muted);line-height:1.5}
 .hp-badge-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px}
-.hp-badge-item{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 9px}
-.hp-badge-em{font-size:14px;flex-shrink:0}
-.hp-badge-name{font-size:9px;font-weight:600;color:var(--text)}
-.hp-badge-desc{font-size:8px;color:var(--muted);margin-top:1px}
+.hp-badge-item{display:flex;align-items:flex-start;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 9px}
+.hp-badge-pill{font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.hp-badge-desc{font-size:8px;color:var(--muted);line-height:1.4}
 .hp-divider{height:1px;background:var(--border);margin:4px 12px 8px}
-.hp-contact{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(255,63,108,0.08),rgba(255,140,66,0.05));border:1px solid rgba(255,63,108,0.2);border-radius:10px;padding:10px 12px;margin:0 12px 6px}
-.hp-contact-ic{font-size:20px;flex-shrink:0}
-.hp-contact-ttl{font-size:10px;font-weight:700;color:var(--text);margin-bottom:2px}
-.hp-contact-tx{font-size:9px;color:var(--muted)}
-.hp-contact-email{color:var(--accent);font-weight:600}
-.hp-stat-row{display:flex;justify-content:space-around;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
-.hp-stat-val{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--text);text-align:center}
-.hp-stat-lbl{font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);text-align:center;margin-top:2px}
+.hp-suggest{margin:0 12px 6px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 12px}
+.hp-suggest-ttl{font-size:10px;font-weight:700;color:var(--text);margin-bottom:4px}
+.hp-suggest-sub{font-size:8px;color:var(--muted);margin-bottom:9px}
+.hp-cat-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+.hp-cat{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 9px;font-size:8px;font-weight:600;color:var(--muted);cursor:pointer}
+.hp-cat.active{background:rgba(255,63,108,0.15);border-color:rgba(255,63,108,0.4);color:var(--accent)}
+.hp-textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:9px;font-family:'Manrope',sans-serif;padding:7px 9px;outline:none;resize:none;box-sizing:border-box;line-height:1.5}
+.hp-textarea:focus{border-color:rgba(255,63,108,0.4)}
+.hp-textarea::placeholder{color:var(--muted);opacity:0.5}
+.hp-submit{width:100%;margin-top:7px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:8px;color:#fff;font-size:10px;font-weight:700;padding:9px;cursor:pointer;letter-spacing:0.5px}
+.hp-submit:hover{filter:brightness(1.1)}
+.hp-submit:active{transform:scale(0.98)}
+.hp-submit-sent{text-align:center;font-size:9px;color:var(--green);padding:4px 0 2px;display:none}
 .hp-ver{font-size:8px;color:var(--muted);text-align:center;opacity:0.4;padding:10px 0 14px;letter-spacing:0.5px}
 </style>
 
 <div class="hp-hdr">
   <div class="hp-title">Help & Support</div>
-  <div class="hp-sub">Everything you need to maximize earnings</div>
+  <div class="hp-sub">Everything you need to get started</div>
 </div>
 
 <div class="hp-sec">
-  <div class="hp-sec-lbl">Live Session Stats</div>
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:6px">
-    <div class="hp-stat-row">
-      <div><div class="hp-stat-val" id="hp-viewers">—</div><div class="hp-stat-lbl">Viewers</div></div>
-      <div><div class="hp-stat-val" id="hp-tippers">—</div><div class="hp-stat-lbl">Tippers</div></div>
-      <div><div class="hp-stat-val" id="hp-whales">—</div><div class="hp-stat-lbl">Whales</div></div>
-      <div><div class="hp-stat-val" id="hp-total">—</div><div class="hp-stat-lbl">Total tk</div></div>
-    </div>
-  </div>
-</div>
-
-<div class="hp-sec">
-  <div class="hp-sec-lbl">Feature Guide</div>
-  <div class="hp-card"><div class="hp-card-ic">⚡</div><div><div class="hp-card-ttl">Live Tab</div><div class="hp-card-tx">Real-time stats, whale tracker, AI monetization prompts, engagement heat map, and dynamic pricing recommendations — all updated as tips come in.</div></div></div>
-  <div class="hp-card"><div class="hp-card-ic">📊</div><div><div class="hp-card-ttl">Analytics</div><div class="hp-card-tx">Session totals, conversion rate, avg tip size, tips/hr pace, and a ranked bar chart of your top tippers this session.</div></div></div>
-  <div class="hp-card"><div class="hp-card-ic">💜</div><div><div class="hp-card-ttl">Fans</div><div class="hp-card-tx">Full fan leaderboard with In Room, Top 30d, and New filters. 30-day tip history persists across sessions automatically.</div></div></div>
-  <div class="hp-card"><div class="hp-card-ic">⚙️</div><div><div class="hp-card-ttl">Settings</div><div class="hp-card-tx">Configure whale threshold, prompt frequency, overlay opacity, and manage your 30-day history data.</div></div></div>
+  <div class="hp-sec-lbl">Quick Start</div>
+  <div class="hp-card"><div class="hp-card-ic">⚡</div><div><div class="hp-card-ttl">Live Tab</div><div class="hp-card-tx">Real-time viewer and tip tracking. Watch your whale tracker, heat map, and AI prompts update live as tips come in.</div></div></div>
+  <div class="hp-card"><div class="hp-card-ic">🐋</div><div><div class="hp-card-ttl">Whale Tracker</div><div class="hp-card-tx">Identify and track your top spenders. Avatars show initials with Gold, Silver, and Bronze tiers based on tip volume.</div></div></div>
+  <div class="hp-card"><div class="hp-card-ic">💜</div><div><div class="hp-card-ttl">Fan Leaderboard</div><div class="hp-card-tx">See who your loyal fans are. Filter by In Room, Top Tippers, or New viewers. 30-day history persists across sessions.</div></div></div>
+  <div class="hp-card"><div class="hp-card-ic">🤖</div><div><div class="hp-card-ttl">AI Price Recommendation</div><div class="hp-card-tx">Smart pricing based on your room demand score, conversion rate, whale presence, and live tip patterns.</div></div></div>
 </div>
 
 <div class="hp-divider"></div>
 
 <div class="hp-sec">
-  <div class="hp-sec-lbl">Viewer Badge Legend</div>
+  <div class="hp-sec-lbl">Badge Legend</div>
   <div class="hp-badge-grid">
-    <div class="hp-badge-item"><div class="hp-badge-em">🐋</div><div><div class="hp-badge-name">Whale</div><div class="hp-badge-desc">Tipped tons recently</div></div></div>
-    <div class="hp-badge-item"><div class="hp-badge-em">🔥</div><div><div class="hp-badge-name">Hot Tipper</div><div class="hp-badge-desc">Tipped a lot recently</div></div></div>
-    <div class="hp-badge-item"><div class="hp-badge-em">💎</div><div><div class="hp-badge-name">Has Tokens</div><div class="hp-badge-desc">Token balance present</div></div></div>
-    <div class="hp-badge-item"><div class="hp-badge-em">🥇</div><div><div class="hp-badge-name">Top Tipper</div><div class="hp-badge-desc">#1 this session</div></div></div>
-    <div class="hp-badge-item"><div class="hp-badge-em">🔁</div><div><div class="hp-badge-name">Loyal</div><div class="hp-badge-desc">Joined 3+ times</div></div></div>
-    <div class="hp-badge-item"><div class="hp-badge-em">↩</div><div><div class="hp-badge-name">Left Room</div><div class="hp-badge-desc">No longer present</div></div></div>
+    <div class="hp-badge-item"><span class="hp-badge-pill" style="background:rgba(255,209,102,0.15);color:var(--gold);border:1px solid rgba(255,209,102,0.3)">🐋 WHALE</span><div class="hp-badge-desc">$50+ tips this session</div></div>
+    <div class="hp-badge-item"><span class="hp-badge-pill" style="background:rgba(255,209,102,0.12);color:#e8c060;border:1px solid rgba(255,209,102,0.2)">🥇 GOLD</span><div class="hp-badge-desc">#1 tipper this session</div></div>
+    <div class="hp-badge-item"><span class="hp-badge-pill" style="background:rgba(192,192,208,0.12);color:#b0b0c8;border:1px solid rgba(192,192,208,0.2)">🥈 SILVER</span><div class="hp-badge-desc">#2 tipper this session</div></div>
+    <div class="hp-badge-item"><span class="hp-badge-pill" style="background:rgba(205,127,50,0.12);color:#cd7f32;border:1px solid rgba(205,127,50,0.2)">🥉 BRONZE</span><div class="hp-badge-desc">#3 tipper this session</div></div>
+    <div class="hp-badge-item"><span class="hp-badge-pill" style="background:rgba(108,99,255,0.15);color:#9f9bff;border:1px solid rgba(108,99,255,0.25)">🔁 LOYAL</span><div class="hp-badge-desc">Joined 3+ times</div></div>
+    <div class="hp-badge-item"><span class="hp-badge-pill" style="background:rgba(6,214,160,0.12);color:var(--green);border:1px solid rgba(6,214,160,0.2)">✨ NEW</span><div class="hp-badge-desc">First time in room</div></div>
+    <div class="hp-badge-item"><span class="hp-badge-pill" style="background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid var(--border)">↩ LEFT</span><div class="hp-badge-desc">No longer in room</div></div>
   </div>
 </div>
 
 <div class="hp-divider"></div>
 
-<div class="hp-contact">
-  <div class="hp-contact-ic">💬</div>
-  <div>
-    <div class="hp-contact-ttl">Need help or have feedback?</div>
-    <div class="hp-contact-tx">Email us at <span class="hp-contact-email">support@apexrevenue.works</span></div>
+<div class="hp-suggest">
+  <div class="hp-suggest-ttl">Suggest a Feature</div>
+  <div class="hp-suggest-sub">Help shape what we build next</div>
+  <div class="hp-cat-chips">
+    <div class="hp-cat active" data-cat="feature">Feature Request</div>
+    <div class="hp-cat" data-cat="bug">Bug Report</div>
+    <div class="hp-cat" data-cat="integration">Integration</div>
+    <div class="hp-cat" data-cat="other">Other</div>
   </div>
+  <textarea class="hp-textarea" id="hp-suggest-text" rows="3" placeholder="Describe your idea or issue…"></textarea>
+  <button class="hp-submit" id="hp-submit-btn">Submit Feedback</button>
+  <div class="hp-submit-sent" id="hp-submit-sent">✓ Thanks! Feedback received.</div>
 </div>
 
-<div class="hp-ver">Apex Revenue v0.5.1 · Creator Intelligence Engine</div>`; }
+<div class="hp-ver">Apex Revenue v0.6.0 · Creator Intelligence Engine</div>`; }
 
 function updateHelp(data) {
   if (currentPage !== 'help') return;
-  var viewers  = data.viewers  || 0;
-  var fans     = data.fans     || [];
-  var whales   = data.whales   || [];
-  var tippers  = fans.filter(function(f){ return f.tips > 0; });
-  var total    = data.totalTips || 0;
-  function set(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
-  set('hp-viewers',  viewers);
-  set('hp-tippers',  tippers.length);
-  set('hp-whales',   whales.filter(function(w){ return w.present !== false; }).length);
-  set('hp-total',    total > 0 ? total : '—');
+  // Wire category chip toggles
+  document.querySelectorAll('.hp-cat').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      document.querySelectorAll('.hp-cat').forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+    });
+  });
+  // Wire submit button
+  var submitBtn = document.getElementById('hp-submit-btn');
+  var sentMsg   = document.getElementById('hp-submit-sent');
+  if (submitBtn && !submitBtn._wired) {
+    submitBtn._wired = true;
+    submitBtn.addEventListener('click', function() {
+      var text = (document.getElementById('hp-suggest-text') || {}).value || '';
+      if (!text.trim()) return;
+      var cat  = (document.querySelector('.hp-cat.active') || {}).getAttribute('data-cat') || 'feature';
+      // Store locally since no backend yet
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.get(['apexFeedback'], function(r) {
+          var fb = r.apexFeedback || [];
+          fb.push({ cat: cat, text: text, ts: Date.now() });
+          chrome.storage.local.set({ apexFeedback: fb });
+        });
+      }
+      document.getElementById('hp-suggest-text').value = '';
+      if (sentMsg) { sentMsg.style.display = 'block'; setTimeout(function(){ sentMsg.style.display = 'none'; }, 3000); }
+    });
+  }
 }
 
 // Boot
@@ -300,6 +317,7 @@ renderPage('live');
 // ── Live data updates from content.js ────────────────────────────────────────
 var currentPage = 'live';
 var lastData = null;
+var viewerHistory = []; // [{v, ts}] — rolling viewer count snapshots for audience peak chart
 
 // Track nav changes so we know which page is active
 document.querySelectorAll('.nav-item').forEach(function(item) {
@@ -328,6 +346,10 @@ function applyLiveData(data) {
   if (!data) return;
   lastData = data;
 
+  // ── Viewer history snapshot ──────────────────────────────────────────────────
+  viewerHistory.push({ v: data.viewers || 0, ts: Date.now() });
+  if (viewerHistory.length > 60) viewerHistory.shift();
+
   // ── Stats row ───────────────────────────────────────────────────────────────
   var tipsEl = document.querySelector('.stat-card.tips .stat-value');
   if (tipsEl) tipsEl.innerHTML = '$' + (data.tokensPerHour || 0) + '<span>/hr</span>';
@@ -344,20 +366,22 @@ function applyLiveData(data) {
   // ── Whale tracker ───────────────────────────────────────────────────────────
   var whaleTable = document.querySelector('.whale-table');
   if (whaleTable) {
-    var tierEmoji = ['👑','🐋','🔥','💎','👤'];
     var tierClass = ['t1','t1','t1','t2','t3'];
+    var tierLabel = ['Gold','Gold','Gold','Silver','Bronze'];
     var whales    = (data.whales && data.whales.length > 0) ? data.whales : (data.fans || []);
     var theadHTML = '<div class="whale-thead"><div class="whale-th">Viewer</div><div class="whale-th" style="text-align:right">Tips</div><div class="whale-th c">In</div><div class="whale-th c">Out</div></div>';
 
     var rowsHTML = whales.slice(0, 5).map(function(w, i) {
       var t = Math.min(w.tier !== undefined ? w.tier : 4, 4);
       var present = w.present !== false;
-      var tipLabel = w.tips > 0 ? ('$' + w.tips) : (t===1?'Whale':t===2?'Hot':t===3?'Tokens':'Viewer');
+      var tipLabel = w.tips > 0 ? ('$' + w.tips) : '—';
+      var initial = w.username ? w.username[0].toUpperCase() : '?';
+      var rankStr = present ? tierLabel[t] : 'Left room';
       return '<div class="whale-row' + (present ? '' : ' left') + '">' +
-        '<div class="whale-id"><div class="av ' + tierClass[t] + '">' + tierEmoji[t] +
+        '<div class="whale-id"><div class="av ' + tierClass[t] + '" style="font-size:10px;font-weight:700;color:#fff">' + initial +
         '<div class="sd ' + (present ? 'on' : 'off') + '"></div></div>' +
         '<div><div class="wname">' + w.username + '</div>' +
-        '<div class="wrank">#' + (i+1) + ' · ' + (t===1?'Whale':t===2?'Hot':t===3?'Has Tokens':'Viewer') + '</div></div></div>' +
+        '<div class="wrank">#' + (i+1) + ' · ' + rankStr + '</div></div></div>' +
         '<div class="wtips">' + tipLabel + '</div>' +
         '<div class="wc">' + (w.joins || 0) + '</div>' +
         '<div class="wc">' + (w.leaves || 0) + '</div></div>';
@@ -699,71 +723,85 @@ function updatePricing(data) {
 
 
 // ── Analytics page ────────────────────────────────────────────────────────────
-function getAnalyticsPage() {
-  return `
+function getAnalyticsPage() { return `
 <style>
-.an-hdr{padding:12px 12px 8px}
-.an-title{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--text)}
-.an-sub{font-size:9px;color:var(--muted);margin-top:2px}
-.an-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 12px 10px}
-.an-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 11px;position:relative;overflow:hidden}
-.an-card-lbl{font-size:7px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-.an-card-val{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--text);line-height:1}
-.an-card-val span{font-size:10px;color:var(--muted);font-family:'Manrope',sans-serif;font-weight:500}
-.an-card-sub{font-size:8px;color:var(--muted);margin-top:3px}
+.an-hdr{padding:12px 12px 6px}.an-title{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--text)}.an-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.an-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:0 12px 10px}
+.an-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 10px;position:relative;overflow:hidden}
+.an-card-lbl{font-size:7px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.an-card-val{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:var(--text);line-height:1}.an-card-val span{font-size:9px;color:var(--muted)}
 .an-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
-.an-card.c1::after{background:linear-gradient(90deg,var(--accent),var(--accent2))}
-.an-card.c2::after{background:linear-gradient(90deg,#4a9eff,#7c5cfc)}
-.an-card.c3::after{background:linear-gradient(90deg,var(--green),#4affb0)}
-.an-card.c4::after{background:linear-gradient(90deg,var(--gold),#ffaa00)}
-.an-card.c5::after{background:linear-gradient(90deg,#ff63a5,#ff3f6c)}
-.an-card.c6::after{background:linear-gradient(90deg,#7c5cfc,#b48aff)}
+.an-card.c1::after{background:linear-gradient(90deg,var(--accent),var(--accent2))}.an-card.c2::after{background:linear-gradient(90deg,#4a9eff,#7c5cfc)}.an-card.c3::after{background:linear-gradient(90deg,var(--green),#4affb0)}.an-card.c4::after{background:linear-gradient(90deg,var(--gold),#ffaa00)}.an-card.c5::after{background:linear-gradient(90deg,#ff63a5,#ff3f6c)}.an-card.c6::after{background:linear-gradient(90deg,#7c5cfc,#b48aff)}
 .an-divider{height:1px;background:var(--border);margin:0 12px 10px}
-.an-sec{padding:0 12px 10px}
-.an-sec-lbl{font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-.an-tip-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.an-tip-bar-wrap{flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
-.an-tip-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
-.an-tip-user{font-size:9px;font-weight:600;color:var(--text);width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.an-tip-amt{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);width:32px;text-align:right;flex-shrink:0}
-.an-pace-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
-.an-pace-lbl{font-size:9px;color:var(--muted)}
-.an-pace-val{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--text)}
+.an-sec{padding:0 12px 10px}.an-sec-lbl{font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.an-peak-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px}
+.an-peak-row{display:flex;justify-content:space-around;margin-bottom:9px}
+.an-peak-item{text-align:center}.an-peak-val{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--text)}.an-peak-lbl{font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.an-vbars{display:flex;align-items:flex-end;gap:2px;height:36px}.an-vbar{flex:1;border-radius:2px 2px 0 0;min-height:3px}
+.an-vtime{display:flex;justify-content:space-between;margin-top:4px;font-size:7px;color:var(--muted);font-family:'DM Mono',monospace}
+.an-pace-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.an-pace-lbl{font-size:9px;color:var(--muted)}.an-pace-val{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--text)}
 .an-pace-val.up{color:var(--green)}.an-pace-val.warn{color:var(--gold)}.an-pace-val.hot{color:var(--accent)}
-.an-empty{text-align:center;padding:20px;font-size:10px;color:var(--muted);opacity:0.6}
+.an-tip-row{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.an-tip-bar-wrap{flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}.an-tip-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.an-tip-user{font-size:9px;font-weight:600;color:var(--text);width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.an-tip-amt{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);width:38px;text-align:right;flex-shrink:0}
+.an-table{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.an-row{display:grid;padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.03);align-items:center;gap:5px}
+.an-row:last-child{border-bottom:none}.an-row.whale-r{grid-template-columns:18px 1fr 46px 8px}.an-row.fan-r{grid-template-columns:18px 1fr 52px}
+.an-rnum{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-align:center}
+.an-rinfo{display:flex;flex-direction:column;gap:2px;min-width:0}.an-rname{font-size:10px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.an-rbadge{font-size:7px;font-weight:700;padding:1px 5px;border-radius:3px;align-self:flex-start;white-space:nowrap}
+.an-ramt{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);text-align:right}
+.an-rdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}.an-rdot.on{background:var(--green)}.an-rdot.off{background:#444}
+.an-empty{text-align:center;padding:14px;font-size:10px;color:var(--muted);opacity:0.6}
 </style>
-<div class="an-hdr">
-  <div class="an-title">Analytics</div>
-  <div class="an-sub" id="an-session-time">Session started just now</div>
-</div>
+<div class="an-hdr"><div class="an-title">Analytics</div><div class="an-sub" id="an-session-time">Session started just now</div></div>
 <div class="an-grid">
-  <div class="an-card c1"><div class="an-card-lbl">Total Earned</div><div class="an-card-val" id="an-total">0<span> tk</span></div><div class="an-card-sub" id="an-total-sub">this session</div></div>
-  <div class="an-card c2"><div class="an-card-lbl">Viewers</div><div class="an-card-val" id="an-viewers">0</div><div class="an-card-sub" id="an-viewers-sub">in room now</div></div>
-  <div class="an-card c3"><div class="an-card-lbl">Conversion</div><div class="an-card-val" id="an-conv">0<span>%</span></div><div class="an-card-sub" id="an-conv-sub">viewers who tipped</div></div>
-  <div class="an-card c4"><div class="an-card-lbl">Avg Tip</div><div class="an-card-val" id="an-avg">—<span></span></div><div class="an-card-sub" id="an-avg-sub">per transaction</div></div>
-  <div class="an-card c5"><div class="an-card-lbl">Tip Rate</div><div class="an-card-val" id="an-tph">0<span>/hr</span></div><div class="an-card-sub" id="an-tph-sub">tokens per hour</div></div>
-  <div class="an-card c6"><div class="an-card-lbl">Tippers</div><div class="an-card-val" id="an-tippers">0</div><div class="an-card-sub" id="an-tippers-sub">unique this session</div></div>
+  <div class="an-card c1"><div class="an-card-lbl">Total Earned</div><div class="an-card-val" id="an-total">0<span> tk</span></div></div>
+  <div class="an-card c2"><div class="an-card-lbl">Viewers</div><div class="an-card-val" id="an-viewers">0</div></div>
+  <div class="an-card c3"><div class="an-card-lbl">Conv.</div><div class="an-card-val" id="an-conv">0<span>%</span></div></div>
+  <div class="an-card c4"><div class="an-card-lbl">Avg Tip</div><div class="an-card-val" id="an-avg">—</div></div>
+  <div class="an-card c5"><div class="an-card-lbl">Tip Rate</div><div class="an-card-val" id="an-tph">0<span>/hr</span></div></div>
+  <div class="an-card c6"><div class="an-card-lbl">Tippers</div><div class="an-card-val" id="an-tippers">0</div></div>
 </div>
 <div class="an-divider"></div>
 <div class="an-sec">
-  <div class="an-sec-lbl">Top Tippers</div>
-  <div id="an-top-tippers"><div class="an-empty">No tips yet this session</div></div>
+  <div class="an-sec-lbl">Audience Peak Tracking</div>
+  <div class="an-peak-wrap">
+    <div class="an-peak-row">
+      <div class="an-peak-item"><div class="an-peak-val" id="an-v-now">0</div><div class="an-peak-lbl">Now</div></div>
+      <div class="an-peak-item"><div class="an-peak-val" id="an-v-peak" style="color:var(--gold)">0</div><div class="an-peak-lbl">Peak</div></div>
+      <div class="an-peak-item"><div class="an-peak-val" id="an-v-avg">0</div><div class="an-peak-lbl">Avg</div></div>
+      <div class="an-peak-item"><div class="an-peak-val" id="an-v-trend" style="font-size:14px">→</div><div class="an-peak-lbl">Trend</div></div>
+    </div>
+    <div class="an-vbars" id="an-vbars"></div>
+    <div class="an-vtime" id="an-vtime"></div>
+  </div>
 </div>
 <div class="an-divider"></div>
-<div class="an-sec" style="padding-bottom:14px">
-  <div class="an-sec-lbl">Session Pace</div>
-  <div id="an-pace">
+<div class="an-sec">
+  <div class="an-sec-lbl">Tip Volume</div>
+  <div>
+    <div class="an-pace-row"><span class="an-pace-lbl">Session total</span><span class="an-pace-val hot" id="an-total2">—</span></div>
     <div class="an-pace-row"><span class="an-pace-lbl">Largest tip</span><span class="an-pace-val" id="an-max-tip">—</span></div>
     <div class="an-pace-row"><span class="an-pace-lbl">Smallest tip</span><span class="an-pace-val" id="an-min-tip">—</span></div>
     <div class="an-pace-row"><span class="an-pace-lbl">Tips per minute</span><span class="an-pace-val" id="an-tpm">—</span></div>
-    <div class="an-pace-row"><span class="an-pace-lbl">Whales in room</span><span class="an-pace-val" id="an-whale-count">0</span></div>
     <div class="an-pace-row" style="border:none"><span class="an-pace-lbl">Session status</span><span class="an-pace-val" id="an-status">Watching…</span></div>
   </div>
-</div>`;
-}
+  <div style="margin-top:8px" id="an-top-tippers"><div class="an-empty">No tips yet</div></div>
+</div>
+<div class="an-divider"></div>
+<div class="an-sec">
+  <div class="an-sec-lbl">🐋 Whale Tracker</div>
+  <div class="an-table" id="an-whale-table"><div class="an-empty">Watching for whales…</div></div>
+</div>
+<div class="an-divider"></div>
+<div class="an-sec" style="padding-bottom:14px">
+  <div class="an-sec-lbl">30-Day Fan Volume</div>
+  <div class="an-table" id="an-30d-fans"><div class="an-empty">No 30-day history yet</div></div>
+</div>`; }
 
 function updateAnalytics(data) {
-  // Only update if analytics page is active
   if (currentPage !== 'analytics') return;
 
   var viewers   = data.viewers    || 0;
@@ -774,7 +812,6 @@ function updateAnalytics(data) {
   var whales    = data.whales     || [];
   var tipEvents = data.tipEvents  || [];
   var tippers   = fans.filter(function(f) { return f.tips > 0; });
-
   var amounts   = tipEvents.map(function(e){ return e.amount; });
   var avgTip    = amounts.length ? Math.round(amounts.reduce(function(s,a){return s+a;},0) / amounts.length) : 0;
   var maxTip    = amounts.length ? Math.max.apply(null, amounts) : 0;
@@ -785,11 +822,9 @@ function updateAnalytics(data) {
   var elapsedMs    = Date.now() - sessionStart;
   var elapsedMin   = Math.round(elapsedMs / 60000);
   var elapsedStr   = elapsedMin < 2 ? 'just started' : elapsedMin < 60
-    ? elapsedMin + ' min ago'
-    : Math.floor(elapsedMin/60) + 'h ' + (elapsedMin%60) + 'm ago';
+    ? elapsedMin + ' min ago' : Math.floor(elapsedMin/60) + 'h ' + (elapsedMin%60) + 'm ago';
   var tpm = elapsedMin > 0 ? (tipEvents.length / elapsedMin).toFixed(2) : '—';
 
-  // Session status
   var activeWhales = whales.filter(function(w){ return w.present !== false; });
   var status, statusClass;
   if (activeWhales.length >= 3 && tph > 150) { status = '🔥 On Fire'; statusClass = 'hot'; }
@@ -802,28 +837,64 @@ function updateAnalytics(data) {
   function set(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
   function cls(id, cn)  { var el = document.getElementById(id); if (el) el.className = 'an-pace-val ' + cn; }
 
-  set('an-session-time',  'Session started ' + elapsedStr);
-  set('an-total',         totalTips);
-  set('an-viewers',       viewers);
-  set('an-conv',          convRate);
-  set('an-avg',           avgTip > 0 ? avgTip : '—');
-  set('an-tph',           tph);
-  set('an-tippers',       tippers.length);
-  set('an-viewers-sub',   viewers === 1 ? '1 viewer now' : viewers + ' viewers now');
-  set('an-conv-sub',      tippers.length + ' of ' + viewers + ' tipped');
-  set('an-avg-sub',       amounts.length + ' transactions');
-  set('an-tph-sub',       tph > 100 ? '🔥 Hot pace' : tph > 0 ? 'Good pace' : 'No tips yet');
-  set('an-tippers-sub',   tippers.length + ' unique tippers');
-  set('an-max-tip',       maxTip > 0 ? maxTip + ' tk' : '—');
-  set('an-min-tip',       minTip > 0 ? minTip + ' tk' : '—');
-  set('an-tpm',           tpm);
-  set('an-whale-count',   activeWhales.length);
-  set('an-status',        status);
-  cls('an-status',        statusClass);
-  cls('an-tph',           tph > 150 ? 'hot' : tph > 50 ? 'up' : '');
-  cls('an-conv',          convRate > 5 ? 'up' : convRate > 2 ? 'warn' : '');
+  set('an-session-time', 'Session started ' + elapsedStr);
+  set('an-total',   totalTips);
+  set('an-viewers', viewers);
+  set('an-conv',    convRate);
+  set('an-avg',     avgTip > 0 ? avgTip : '—');
+  set('an-tph',     tph);
+  set('an-tippers', tippers.length);
+  set('an-total2',  totalTips + ' tk');
+  set('an-max-tip', maxTip > 0 ? maxTip + ' tk' : '—');
+  set('an-min-tip', minTip > 0 ? minTip + ' tk' : '—');
+  set('an-tpm',     tpm);
+  set('an-status',  status);
+  cls('an-status',  statusClass);
+  cls('an-tph',     tph > 150 ? 'hot' : tph > 50 ? 'up' : '');
+  cls('an-conv',    convRate > 5 ? 'up' : convRate > 2 ? 'warn' : '');
 
-  // Top tippers bar chart
+  // ── Audience peak tracking ────────────────────────────────────────────────
+  var vhist = viewerHistory.length > 0 ? viewerHistory : [{ v: viewers, ts: Date.now() }];
+  var peakV = Math.max.apply(null, vhist.map(function(h){ return h.v; }));
+  var avgV  = Math.round(vhist.reduce(function(s,h){ return s+h.v; }, 0) / vhist.length);
+  var trend = '→';
+  if (vhist.length >= 6) {
+    var recentAvg = vhist.slice(-5).reduce(function(s,h){return s+h.v;},0)/5;
+    var oldAvg    = vhist.slice(0,5).reduce(function(s,h){return s+h.v;},0)/5;
+    trend = recentAvg > oldAvg * 1.1 ? '↑' : recentAvg < oldAvg * 0.9 ? '↓' : '→';
+  }
+  set('an-v-now',   viewers);
+  set('an-v-peak',  peakV);
+  set('an-v-avg',   avgV);
+  set('an-v-trend', trend);
+
+  var barsEl = document.getElementById('an-vbars');
+  var timeEl = document.getElementById('an-vtime');
+  if (barsEl) {
+    var NUM = Math.min(vhist.length, 24);
+    var slice = vhist.slice(-NUM);
+    var maxV2 = Math.max.apply(null, slice.map(function(h){return h.v;})) || 1;
+    barsEl.innerHTML = slice.map(function(h, i) {
+      var pct = Math.max(Math.round((h.v / maxV2) * 100), 4);
+      var isLast = i === slice.length - 1;
+      var bg = isLast ? 'linear-gradient(to top,#4a1a3a,#ff3f6c)' : 'linear-gradient(to top,#2a2a3a,#5a4a7a)';
+      return '<div class="an-vbar" style="height:'+pct+'%;background:'+bg+'"></div>';
+    }).join('');
+    if (timeEl && slice.length > 1) {
+      var tlabels = [];
+      for (var k = 0; k < 5; k++) {
+        var idx2 = Math.floor((slice.length - 1) * k / 4);
+        if (k === 4) { tlabels.push('Now'); continue; }
+        var d = new Date(slice[idx2].ts);
+        var hh = d.getHours(), mm = d.getMinutes();
+        var ap = hh >= 12 ? 'pm' : 'am'; hh = hh % 12 || 12;
+        tlabels.push(hh + (mm > 0 ? ':' + (mm<10?'0'+mm:mm) : '') + ap);
+      }
+      timeEl.innerHTML = tlabels.map(function(l){ return '<span>'+l+'</span>'; }).join('');
+    }
+  }
+
+  // ── Top tippers bar chart ──────────────────────────────────────────────────
   var tipperEl = document.getElementById('an-top-tippers');
   if (tipperEl) {
     var top = tippers.slice(0, 6);
@@ -836,7 +907,62 @@ function updateAnalytics(data) {
         return '<div class="an-tip-row">' +
           '<div class="an-tip-user">' + f.username + '</div>' +
           '<div class="an-tip-bar-wrap"><div class="an-tip-bar" style="width:' + pct + '%"></div></div>' +
-          '<div class="an-tip-amt">' + f.tips + '</div>' +
+          '<div class="an-tip-amt">' + f.tips + ' tk</div>' +
+        '</div>';
+      }).join('');
+    }
+  }
+
+  // ── Whale tracker ──────────────────────────────────────────────────────────
+  var tierLabel = ['Gold','Gold','Gold','Silver','Bronze'];
+  var tierBadgeStyle = [
+    'background:rgba(255,209,102,0.15);color:var(--gold);border:1px solid rgba(255,209,102,0.3)',
+    'background:rgba(255,209,102,0.15);color:var(--gold);border:1px solid rgba(255,209,102,0.3)',
+    'background:rgba(255,209,102,0.15);color:var(--gold);border:1px solid rgba(255,209,102,0.3)',
+    'background:rgba(192,192,208,0.12);color:#b0b0c8;border:1px solid rgba(192,192,208,0.2)',
+    'background:rgba(205,127,50,0.12);color:#cd7f32;border:1px solid rgba(205,127,50,0.2)'
+  ];
+  var whaleEl = document.getElementById('an-whale-table');
+  if (whaleEl) {
+    var wlist = (whales.length > 0) ? whales : fans.filter(function(f){ return (f.tier||4) <= 3; });
+    if (wlist.length === 0) {
+      whaleEl.innerHTML = '<div class="an-empty">No whales detected yet</div>';
+    } else {
+      whaleEl.innerHTML = wlist.slice(0, 8).map(function(w, i) {
+        var t = Math.min(w.tier !== undefined ? w.tier : 4, 4);
+        var present = w.present !== false;
+        return '<div class="an-row whale-r">' +
+          '<div class="an-rnum">' + (i+1) + '</div>' +
+          '<div class="an-rinfo"><div class="an-rname">' + w.username + '</div>' +
+          '<span class="an-rbadge" style="' + tierBadgeStyle[t] + '">' + tierLabel[t] + '</span></div>' +
+          '<div class="an-ramt">' + (w.tips > 0 ? '$'+w.tips : '—') + '</div>' +
+          '<div class="an-rdot ' + (present?'on':'off') + '"></div>' +
+        '</div>';
+      }).join('');
+    }
+  }
+
+  // ── 30-day fan volume ──────────────────────────────────────────────────────
+  var fanEl = document.getElementById('an-30d-fans');
+  if (fanEl) {
+    var hist = Object.entries(thirtyDayHistory).map(function(e) {
+      return { username: e[0], total: e[1].total };
+    }).sort(function(a,b){ return b.total - a.total; });
+    if (hist.length === 0) {
+      fanEl.innerHTML = '<div class="an-empty">No 30-day history yet — tips will appear here</div>';
+    } else {
+      fanEl.innerHTML = hist.slice(0, 12).map(function(f, i) {
+        var badge, badgeStyle;
+        if (f.total >= 500)      { badge='🐋 WHALE'; badgeStyle='background:rgba(255,209,102,0.15);color:var(--gold);border:1px solid rgba(255,209,102,0.3)'; }
+        else if (i === 0)        { badge='🥇 GOLD';  badgeStyle='background:rgba(255,209,102,0.12);color:#e8c060;border:1px solid rgba(255,209,102,0.2)'; }
+        else if (i === 1)        { badge='🥈 SILVER'; badgeStyle='background:rgba(192,192,208,0.12);color:#b0b0c8;border:1px solid rgba(192,192,208,0.2)'; }
+        else if (i === 2)        { badge='🥉 BRONZE'; badgeStyle='background:rgba(205,127,50,0.12);color:#cd7f32;border:1px solid rgba(205,127,50,0.2)'; }
+        else                     { badge='🔁 LOYAL';  badgeStyle='background:rgba(108,99,255,0.15);color:#9f9bff;border:1px solid rgba(108,99,255,0.25)'; }
+        return '<div class="an-row fan-r">' +
+          '<div class="an-rnum">' + (i+1) + '</div>' +
+          '<div class="an-rinfo"><div class="an-rname">' + f.username.toUpperCase() + '</div>' +
+          '<span class="an-rbadge" style="' + badgeStyle + '">' + badge + '</span></div>' +
+          '<div class="an-ramt">' + f.total + ' tk</div>' +
         '</div>';
       }).join('');
     }
@@ -911,12 +1037,12 @@ function renderFanRows(list, label) {
       '<div class="fuser">' +
         '<div class="fav" style="background:' + avColors[i % avColors.length] + ';color:#fff">' + f.username[0].toUpperCase() + '</div>' +
         '<div class="finfo">' +
-          '<div class="fname">' + f.username + '</div>' +
+          '<div class="fname">' + f.username.toUpperCase() + '</div>' +
           '<div class="fbadges">' +
-            (t===1 ? '<span class="badge bw">🐋</span>' : t===2 ? '<span class="badge bg">🔥</span>' : '') +
-            (i===0 ? '<span class="badge bg">🥇</span>' : i===1 ? '<span class="badge bs">🥈</span>' : i===2 ? '<span class="badge bb">🥉</span>' : '') +
-            (f.joins > 2 ? '<span class="badge bl">🔁</span>' : '') +
-            (!present ? '<span class="badge bx">↩</span>' : '') +
+            (t===1 ? '<span class="badge bw">🐋 WHALE</span>' : '') +
+            (i===0 ? '<span class="badge bg">🥇 GOLD</span>' : i===1 ? '<span class="badge bs">🥈 SILVER</span>' : i===2 ? '<span class="badge bb">🥉 BRONZE</span>' : '') +
+            (f.joins > 2 ? '<span class="badge bl">🔁 LOYAL</span>' : (f.joins <= 1 && f.tips === 0 && present ? '<span class="badge bn">✨ NEW</span>' : '')) +
+            (!present ? '<span class="badge bx">↩ LEFT</span>' : '') +
           '</div>' +
         '</div>' +
         '<div class="fp ' + (present ? 'on' : 'off') + '"></div>' +
@@ -1004,20 +1130,13 @@ function updateFans(data) {
 
 
 // ── Settings page ─────────────────────────────────────────────────────────────
-function getSettingsPage() {
-  return `
+function getSettingsPage() { return `
 <style>
-.set-hdr{padding:12px 12px 8px}
-.set-title{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--text)}
-.set-sub{font-size:9px;color:var(--muted);margin-top:2px}
-.set-sec{padding:8px 12px 4px}
-.set-sec-lbl{font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.set-hdr{padding:12px 12px 8px}.set-title{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--text)}.set-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.set-sec{padding:6px 12px 4px}.set-sec-lbl{font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .set-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 12px;margin-bottom:6px;gap:10px}
-.set-row-info{flex:1;min-width:0}
-.set-row-lbl{font-size:10px;font-weight:600;color:var(--text);margin-bottom:2px}
-.set-row-sub{font-size:8px;color:var(--muted);line-height:1.4}
-.set-toggle{position:relative;width:32px;height:18px;flex-shrink:0}
-.set-toggle input{opacity:0;width:0;height:0;position:absolute}
+.set-row-info{flex:1;min-width:0}.set-row-lbl{font-size:10px;font-weight:600;color:var(--text);margin-bottom:2px}.set-row-sub{font-size:8px;color:var(--muted);line-height:1.4}
+.set-toggle{position:relative;width:32px;height:18px;flex-shrink:0}.set-toggle input{opacity:0;width:0;height:0;position:absolute}
 .set-slider{position:absolute;inset:0;background:#2a2a3a;border-radius:18px;cursor:pointer;transition:background 0.2s}
 .set-slider::before{content:'';position:absolute;width:12px;height:12px;left:3px;top:3px;background:#666;border-radius:50%;transition:transform 0.2s,background 0.2s}
 .set-toggle input:checked + .set-slider{background:rgba(255,63,108,0.3);border:1px solid rgba(255,63,108,0.4)}
@@ -1027,17 +1146,11 @@ function getSettingsPage() {
 .set-input:focus{border-color:rgba(255,63,108,0.4)}
 .set-divider{height:1px;background:var(--border);margin:4px 12px 8px}
 .set-btn{width:100%;background:rgba(255,63,108,0.1);border:1px solid rgba(255,63,108,0.25);border-radius:8px;color:var(--accent);font-size:10px;font-weight:700;padding:9px;cursor:pointer;transition:all 0.15s;margin-bottom:6px}
-.set-btn:hover{background:rgba(255,63,108,0.2)}
-.set-btn.ghost{background:transparent;border-color:var(--border);color:var(--muted)}
-.set-btn.ghost:hover{border-color:rgba(255,255,255,0.15);color:var(--text)}
+.set-btn:hover{background:rgba(255,63,108,0.2)}.set-btn.ghost{background:transparent;border-color:var(--border);color:var(--muted)}.set-btn.ghost:hover{border-color:rgba(255,255,255,0.15);color:var(--text)}
+.set-saved{font-size:8px;color:var(--green);text-align:center;height:14px;margin-bottom:4px;opacity:0;transition:opacity 0.3s}.set-saved.show{opacity:1}
 .set-ver{font-size:8px;color:var(--muted);text-align:center;opacity:0.4;padding:10px 0 14px;letter-spacing:0.5px}
-.set-saved{font-size:8px;color:var(--green);text-align:center;height:14px;margin-bottom:4px;opacity:0;transition:opacity 0.3s}
-.set-saved.show{opacity:1}
 </style>
-<div class="set-hdr">
-  <div class="set-title">Settings</div>
-  <div class="set-sub">Customize Apex Revenue for your room</div>
-</div>
+<div class="set-hdr"><div class="set-title">Settings</div><div class="set-sub">Customize Apex Revenue for your room</div></div>
 
 <div class="set-sec">
   <div class="set-sec-lbl">Whale Detection</div>
@@ -1050,18 +1163,13 @@ function getSettingsPage() {
     <label class="set-toggle"><input type="checkbox" id="set-whale-alert" checked><span class="set-slider"></span></label>
   </div>
 </div>
-
 <div class="set-divider"></div>
-
 <div class="set-sec">
   <div class="set-sec-lbl">Monetization Prompts</div>
   <div class="set-row">
     <div class="set-row-info"><div class="set-row-lbl">Prompt frequency</div><div class="set-row-sub">How often to surface new suggestions</div></div>
     <select class="set-select" id="set-prompt-freq">
-      <option value="30">30s</option>
-      <option value="60" selected>1 min</option>
-      <option value="120">2 min</option>
-      <option value="300">5 min</option>
+      <option value="30">30s</option><option value="60" selected>1 min</option><option value="120">2 min</option><option value="300">5 min</option>
     </select>
   </div>
   <div class="set-row">
@@ -1069,17 +1177,13 @@ function getSettingsPage() {
     <label class="set-toggle"><input type="checkbox" id="set-show-value" checked><span class="set-slider"></span></label>
   </div>
 </div>
-
 <div class="set-divider"></div>
-
 <div class="set-sec">
   <div class="set-sec-lbl">Overlay</div>
   <div class="set-row">
     <div class="set-row-info"><div class="set-row-lbl">Overlay opacity</div><div class="set-row-sub">Transparency of the floating panel</div></div>
     <select class="set-select" id="set-opacity">
-      <option value="0.85">85%</option>
-      <option value="0.92" selected>92%</option>
-      <option value="1.0">100%</option>
+      <option value="0.85">85%</option><option value="0.92" selected>92%</option><option value="1.0">100%</option>
     </select>
   </div>
   <div class="set-row">
@@ -1087,9 +1191,7 @@ function getSettingsPage() {
     <label class="set-toggle"><input type="checkbox" id="set-auto-min"><span class="set-slider"></span></label>
   </div>
 </div>
-
 <div class="set-divider"></div>
-
 <div class="set-sec">
   <div class="set-sec-lbl">Data</div>
   <div class="set-row">
@@ -1097,16 +1199,13 @@ function getSettingsPage() {
     <label class="set-toggle"><input type="checkbox" id="set-save-history" checked><span class="set-slider"></span></label>
   </div>
 </div>
-
 <div class="set-divider"></div>
-
 <div class="set-sec" style="padding-bottom:14px">
   <div class="set-saved" id="set-saved-msg">✓ Settings saved</div>
   <button class="set-btn" id="set-save-btn">Save Settings</button>
   <button class="set-btn ghost" id="set-clear-btn">Clear 30-day History</button>
-  <div class="set-ver">Apex Revenue v0.5.1 · Creator Intelligence Engine</div>
-</div>`;
-}
+  <div class="set-ver">Apex Revenue v0.6.0 · Creator Intelligence Engine</div>
+</div>`; }
 
 function initSettings() {
   // Load saved settings

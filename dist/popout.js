@@ -24,6 +24,7 @@ console.log("popout.js executing");(function(){const c="apex_overlay_pos",u="ape
       z-index: 2147483645;
       border-radius: 14px;
       overflow: hidden;
+      background: #0a0a0f;
       box-shadow: 0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08);
       transition: box-shadow 0.2s;
       display: none;
@@ -33,7 +34,7 @@ console.log("popout.js executing");(function(){const c="apex_overlay_pos",u="ape
       border: none;
       border-radius: 14px;
       display: block;
-    `,s.setAttribute("allowtransparency","true"),t.appendChild(s),["nw","ne","sw","se"].forEach(a=>{const o=document.createElement("div");o.dataset.resizeDir=a;const r=a[0]==="n",m=a[1]==="w";o.style.cssText=`
+    `,t.appendChild(s),["nw","ne","sw","se"].forEach(a=>{const o=document.createElement("div");o.dataset.resizeDir=a;const r=a[0]==="n",m=a[1]==="w";o.style.cssText=`
         position:absolute;
         width:14px; height:14px;
         ${r?"top:-4px":"bottom:-4px"};
