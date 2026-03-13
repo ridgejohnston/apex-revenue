@@ -22,7 +22,7 @@
     "https://us-assets.i.posthog.com/*"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.emailjs.com https://us.i.posthog.com https://us-assets.i.posthog.com https://*.posthog.com"
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.emailjs.com https://us.i.posthog.com https://us-assets.i.posthog.com https://*.posthog.com"
   },
   "action": {
     "default_popup": "popup.html",
@@ -68,6 +68,7 @@
       "resources": [
         "overlay.html",
         "overlay.js",
+        "overlay.css",
         "popup.css",
         "posthog.js",
         "posthog-init.js",
