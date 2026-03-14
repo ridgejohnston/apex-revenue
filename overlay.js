@@ -119,7 +119,7 @@ function getFansPage() { return `
     <div class="fchip active" data-filter="all">All</div>
     <div class="fchip" data-filter="inroom">In Room</div>
     <div class="fchip" data-filter="top30">Top 30d</div>
-    <div class="fchip" data-filter="new">New</div>
+    <div class="fchip" data-filter="new">New Viewers</div>
   </div>
 </div>
 <div class="fans-list" id="fans-list">
@@ -216,28 +216,33 @@ window.addEventListener('message', function(e) {
 });
 
 // Load 30d history + live data together so history is ready before first render
+// Boot order: (1) verify Supabase auth → (2) resolve username → (3) check PIN → (4) load data
 if (typeof chrome !== 'undefined' && chrome.storage) {
-  chrome.storage.local.get(['apexLiveData', 'apex30dHistory'], function(result) {
-    // Populate history first, resetting sessionSnapshot so new-session tips
-    // are correctly accumulated (don't compare against last session's snapshot)
-    if (result.apex30dHistory) {
-      thirtyDayHistory = result.apex30dHistory;
-      Object.keys(thirtyDayHistory).forEach(function(u) {
-        thirtyDayHistory[u].sessionSnapshot = 0;
+  chrome.storage.local.get(['apexCurrentUser'], function(boot) {
+    storageUsername = boot.apexCurrentUser || '';
+    // Step 1: verify the user is authenticated (via stored session)
+    verifyOverlayAuth(function() {
+      // Step 2: check PIN
+      var pinKey = getPinKey();
+      chrome.storage.local.get([pinKey], function(pinResult) {
+        var storedHash = pinResult[pinKey] || null;
+        if (storedHash) {
+          showPinLock(storedHash, loadApexData);
+        } else {
+          loadApexData();
+        }
       });
-    }
-    if (result.apexLiveData) applyLiveData(result.apexLiveData);
-  });
-  setInterval(function() {
-    chrome.storage.local.get(['apexLiveData'], function(result) {
-      if (result.apexLiveData) applyLiveData(result.apexLiveData);
     });
-  }, 3000);
+  });
 }
 
 function applyLiveData(data) {
   if (!data) return;
   lastData = data;
+  // Update storage namespace when broadcaster username arrives
+  if (data.username && data.username !== storageUsername) {
+    storageUsername = data.username;
+  }
 
   // ── Stats row ───────────────────────────────────────────────────────────────
   var tipsEl = document.querySelector('.stat-card.tips .stat-value');
@@ -304,108 +309,226 @@ function updatePrompts(data) {
   const promptSec = document.getElementById('prompt-cards');
   if (!banner || !promptSec) return;
 
+  const now        = Date.now();
   const whales     = data.whales     || [];
   const fans       = data.fans       || [];
   const viewers    = data.viewers    || 0;
   const totalTips  = data.totalTips  || 0;
   const tph        = data.tokensPerHour || 0;
   const convRate   = parseFloat(data.convRate) || 0;
+  const tipEvents  = data.tipEvents  || [];
+  const startTime  = data.startTime  || (now - 10 * 60000);
+  const sessionMin = (now - startTime) / 60000;
+
   const activeWhales = whales.filter(w => w.present !== false);
-  const tippers    = fans.filter(f => f.tips > 0);
-  const lurkers    = viewers - tippers.length;
+  const tippers      = fans.filter(f => f.tips > 0);
+  const lurkers      = Math.max(0, viewers - tippers.length);
 
-  // ── Generate alert banner ──────────────────────────────────────────────────
-  let alertIcon = '💡', alertLabel = 'Tip', alertText = 'Watching your room…', alertCTA = null;
+  // ── Behavioral signals ────────────────────────────────────────────────────
+  // Velocity: token volume in last 5 min vs prior 5–15 min window (normalised)
+  const tips5m     = tipEvents.filter(e => now - e.timestamp < 5 * 60000);
+  const tips5_15m  = tipEvents.filter(e => { const a = now - e.timestamp; return a >= 5*60000 && a < 15*60000; });
+  const vol5m      = tips5m.reduce((s, e) => s + e.amount, 0);
+  const vol5_15m   = tips5_15m.reduce((s, e) => s + e.amount, 0) / 2; // normalise to same window size
+  const accelerating = vol5m > vol5_15m * 1.25 && vol5m > 0;
+  const decelerating = vol5_15m > 0 && vol5m < vol5_15m * 0.55;
 
-  if (activeWhales.length >= 3) {
-    alertIcon  = '🔥'; alertLabel = 'Hot Moment';
-    alertText  = activeWhales.length + ' whales in room — launch a goal or special offer now';
-    alertCTA   = 'Act Now';
-  } else if (activeWhales.length === 2) {
-    alertIcon  = '🐋'; alertLabel = 'Whales Present';
-    alertText  = activeWhales.slice(0,2).map(w=>w.username).join(' & ') + ' are watching — engage them directly';
-    alertCTA   = 'Engage';
-  } else if (activeWhales.length === 1) {
-    alertIcon  = '⚡'; alertLabel = 'Whale Alert';
-    alertText  = activeWhales[0].username + ' is in the room — personalise your next action';
-    alertCTA   = 'Engage';
-  } else if (tph > 200) {
-    alertIcon  = '📈'; alertLabel = 'High Earnings';
-    alertText  = 'You\'re earning $' + tph + '/hr — keep momentum with a countdown goal';
-    alertCTA   = 'Set Goal';
-  } else if (lurkers > viewers * 0.85 && viewers > 10) {
-    alertIcon  = '👁️'; alertLabel = 'Lurker Heavy';
-    alertText  = Math.round(lurkers) + ' viewers haven\'t tipped — time to activate them';
-    alertCTA   = 'Activate';
-  } else if (viewers > 50 && tippers.length === 0) {
-    alertIcon  = '🎯'; alertLabel = 'High Traffic';
-    alertText  = viewers + ' viewers with no tips yet — drop your tip menu now';
-    alertCTA   = 'Drop Menu';
-  } else if (totalTips > 0) {
-    alertIcon  = '💰'; alertLabel = 'Session Active';
-    alertText  = '$' + totalTips + ' earned · ' + tippers.length + ' tippers · keep engagement high';
-    alertCTA   = null;
+  // Burst: 2+ tip events in last 90 seconds
+  const burst = tipEvents.filter(e => now - e.timestamp < 90000).length >= 2;
+
+  // Whale recency: last tip timestamp per user
+  const whaleLast = {};
+  tipEvents.forEach(e => { if (!whaleLast[e.username] || e.timestamp > whaleLast[e.username]) whaleLast[e.username] = e.timestamp; });
+
+  // Quiet whales: present but no tip in last 5 min (and they have tipped this session)
+  const quietWhales    = activeWhales.filter(w => whaleLast[w.username] && (now - whaleLast[w.username]) > 5*60000);
+  // Returning whales: joined more than once (left and came back)
+  const returningWhales = activeWhales.filter(w => (w.joins || 0) > 1);
+
+  // ── Session phase ─────────────────────────────────────────────────────────
+  // warming  → early session or very low activity  → bias toward whale acquisition
+  // building → growing momentum                    → balanced
+  // peak     → high rate, burst, strong conv       → bias toward broad audience conversion
+  // cooling  → declining velocity, whales quieting → bias toward whale re-engagement
+  let phase;
+  if (sessionMin < 10 || (tph < 30 && totalTips < 40)) {
+    phase = 'warming';
+  } else if (decelerating && tph < 90) {
+    phase = 'cooling';
+  } else if (tph > 120 || (burst && convRate > 3)) {
+    phase = 'peak';
+  } else {
+    phase = 'building';
   }
 
-  banner.querySelector('.alert-icon').textContent = alertIcon;
+  // Phase multipliers: prompts scored differently depending on phase
+  const pw = {
+    warming:  { whale: 1.5, audience: 0.65 },
+    building: { whale: 1.0, audience: 1.0  },
+    peak:     { whale: 0.75, audience: 1.5 },
+    cooling:  { whale: 1.6, audience: 0.5  },
+  }[phase];
+
+  const phaseLabel = { warming:'🌅 Warming Up', building:'📈 Building', peak:'🔥 Peak', cooling:'📉 Cooling' }[phase];
+
+  // Inject phase badge into section header
+  const phaseLnk = document.querySelector('.section-lnk');
+  if (phaseLnk) phaseLnk.textContent = phaseLabel;
+
+  // ── Alert banner ──────────────────────────────────────────────────────────
+  let alertIcon = '💡', alertLabel = 'Tip', alertText = 'Watching your room…', alertCTA = null;
+
+  if (burst && phase === 'peak') {
+    alertIcon = '🚀'; alertLabel = 'Tip Burst';
+    alertText = 'Multiple tips in 90 seconds — peak momentum, act immediately';
+    alertCTA = 'Act Now';
+  } else if (quietWhales.length >= 1 && phase === 'cooling') {
+    alertIcon = '🔔'; alertLabel = 'Whale Gone Quiet';
+    alertText = quietWhales[0].username + ' has been silent 5+ min — re-engage before they leave';
+    alertCTA = 'Re-engage';
+  } else if (activeWhales.length >= 3) {
+    alertIcon = '🔥'; alertLabel = 'Hot Moment';
+    alertText = activeWhales.length + ' whales in room — launch a goal or special offer now';
+    alertCTA = 'Act Now';
+  } else if (returningWhales.length >= 1) {
+    alertIcon = '👋'; alertLabel = 'Whale Returned';
+    alertText = returningWhales[0].username + ' came back — returning whales tip significantly more';
+    alertCTA = 'Engage';
+  } else if (activeWhales.length === 2) {
+    alertIcon = '🐋'; alertLabel = 'Whales Present';
+    alertText = activeWhales.slice(0,2).map(w=>w.username).join(' & ') + ' are watching — engage them directly';
+    alertCTA = 'Engage';
+  } else if (activeWhales.length === 1) {
+    alertIcon = '⚡'; alertLabel = 'Whale Alert';
+    alertText = activeWhales[0].username + ' is in the room — personalise your next action';
+    alertCTA = 'Engage';
+  } else if (accelerating) {
+    alertIcon = '📈'; alertLabel = 'Momentum Rising';
+    alertText = 'Tip rate accelerating — capitalise before it plateaus';
+    alertCTA = 'Set Goal';
+  } else if (tph > 200) {
+    alertIcon = '📈'; alertLabel = 'High Earnings';
+    alertText = 'Earning ' + tph + ' tk/hr — sustain with a countdown goal';
+    alertCTA = 'Set Goal';
+  } else if (lurkers > viewers * 0.85 && viewers > 10) {
+    alertIcon = '👁️'; alertLabel = 'Lurker Heavy';
+    alertText = Math.round(lurkers) + ' viewers haven\'t tipped — time to activate them';
+    alertCTA = 'Activate';
+  } else if (viewers > 50 && tippers.length === 0) {
+    alertIcon = '🎯'; alertLabel = 'High Traffic';
+    alertText = viewers + ' viewers, no tips yet — drop your tip menu now';
+    alertCTA = 'Drop Menu';
+  } else if (totalTips > 0) {
+    alertIcon = '💰'; alertLabel = 'Session Active';
+    alertText = totalTips + ' tk earned · ' + tippers.length + ' tippers · ' + phaseLabel;
+    alertCTA = null;
+  }
+
+  banner.querySelector('.alert-icon').textContent  = alertIcon;
   banner.querySelector('.alert-label').textContent = alertLabel;
   banner.querySelector('.alert-text').textContent  = alertText;
   var ctaBtn = banner.querySelector('.alert-cta');
   if (alertCTA) { ctaBtn.textContent = alertCTA; ctaBtn.style.display = ''; }
   else { ctaBtn.style.display = 'none'; }
 
-  // ── Generate prompt cards ──────────────────────────────────────────────────
+  // ── Prompt cards ──────────────────────────────────────────────────────────
   const prompts = [];
 
-  // Prompt logic — scored by expected value
-  if (activeWhales.length >= 2) {
-    prompts.push({ heat:'hot', icon:'💰', action:'Launch an exclusive group show goal', reason: activeWhales.length + ' whales likely to tip big', value: Math.round(activeWhales.reduce((s,w)=>s+(w.tips||20),0)*0.4) });
-  }
-
-  if (activeWhales.length >= 1 && tph < 100) {
+  // ── WHALE-BIASED (high weight in warming + cooling) ───────────────────────
+  if (activeWhales.length >= 1) {
     const w = activeWhales[0];
-    prompts.push({ heat:'hot', icon:'🎯', action:'Call out ' + w.username + ' by name', reason: 'Personal attention converts whales', value: Math.round((w.tips || 10) * 0.5 + 15) });
+    const reason = phase === 'warming'  ? 'Early whale engagement sets the tip culture for the room'
+                 : phase === 'cooling'  ? 'Your top spender is still here — a direct callout re-ignites'
+                 : phase === 'building' ? 'Personal attention converts high-value viewers'
+                 :                       'Acknowledge your biggest tipper while momentum is hot';
+    prompts.push({ heat:'hot', icon:'🎯', action:'Call out ' + w.username + ' by name', reason, value: Math.round(((w.tips||20)*0.55+20)*pw.whale), tag:'whale' });
   }
 
-  if (tippers.length > 0 && lurkers > 20) {
-    prompts.push({ heat:'medium', icon:'📢', action:'Announce your tip menu out loud', reason: Math.round(lurkers) + ' lurkers need activation', value: Math.round(lurkers * 0.02 * 10) });
+  if (quietWhales.length >= 1) {
+    const qw = quietWhales[0];
+    prompts.push({ heat:'hot', icon:'🔔', action:'Re-engage ' + qw.username + ' — they\'ve gone quiet',
+      reason: 'Present but silent 5+ min — direct attention often reactivates spending',
+      value: Math.round(((qw.tips||30)*0.45+15)*pw.whale), tag:'whale' });
   }
 
-  if (convRate < 2 && viewers > 20) {
-    prompts.push({ heat:'medium', icon:'✨', action:'Run a quick viewer poll in chat', reason: 'Low conv rate (' + convRate + '%) — polls activate lurkers', value: Math.round(viewers * 0.015 * 10) });
+  if (returningWhales.length >= 1) {
+    const rw = returningWhales[0];
+    prompts.push({ heat:'hot', icon:'🔄', action:'Welcome ' + rw.username + ' back to the room',
+      reason: 'Returned ' + rw.joins + ' times — acknowledging return visits drives larger tips',
+      value: Math.round(((rw.tips||25)*0.6+12)*pw.whale), tag:'whale' });
   }
 
-  if (tph > 150) {
-    prompts.push({ heat:'hot', icon:'⏱️', action:'Set a 5-minute countdown goal', reason: 'Momentum is high — capitalize now', value: Math.round(tph * 0.15) });
+  if (activeWhales.length >= 2) {
+    const goalType = phase === 'peak' ? 'Launch a timed group goal NOW' : 'Launch a whale-tier exclusive goal';
+    const wTotal   = activeWhales.reduce((s,w) => s+(w.tips||20), 0);
+    prompts.push({ heat:'hot', icon:'💰', action: goalType,
+      reason: activeWhales.length + ' whales in room — ' + (phase === 'peak' ? 'peak momentum, maximize immediately' : 'high-value moment'),
+      value: Math.round(wTotal * 0.42 * pw.whale), tag:'whale' });
   }
 
-  if (tippers.length >= 3 && totalTips > 50) {
+  if (decelerating && activeWhales.length > 0) {
+    prompts.push({ heat:'hot', icon:'🔥', action:'Drop a limited-time exclusive offer',
+      reason: 'Tip velocity is declining — urgency resets momentum and re-engages big spenders',
+      value: Math.round(tph * 0.22 * pw.whale), tag:'whale' });
+  }
+
+  if (phase === 'warming' && sessionMin < 12 && activeWhales.length === 0) {
+    prompts.push({ heat:'medium', icon:'🎪', action:'Tease an exclusive unlock goal',
+      reason: 'Early session — setting expectations now primes whale spending for later',
+      value: Math.round(viewers * 0.025 * 10 * pw.whale), tag:'whale' });
+  }
+
+  // ── AUDIENCE-WIDE (high weight in peak + building) ────────────────────────
+  if (lurkers > 15) {
+    const urgency = phase === 'peak' ? 'Room energy is high — this is the best moment to convert lurkers' : Math.round(lurkers) + ' viewers haven\'t tipped yet';
+    prompts.push({ heat: phase === 'peak' ? 'hot' : 'medium', icon:'📢',
+      action:'Announce your tip menu out loud', reason: urgency,
+      value: Math.round(lurkers * 0.022 * 10 * pw.audience), tag:'audience' });
+  }
+
+  if (convRate < 2.5 && viewers > 15) {
+    prompts.push({ heat:'medium', icon:'✨', action:'Run a quick viewer poll in chat',
+      reason: 'Conv rate ' + convRate + '% — polls shift lurkers from passive to engaged',
+      value: Math.round(viewers * 0.016 * 10 * pw.audience), tag:'audience' });
+  }
+
+  if ((burst || accelerating) && phase !== 'cooling') {
+    const burstReason = burst ? '2+ tips in 90 seconds — capitalise before the window closes' : 'Tip rate accelerating — a timed goal locks in momentum';
+    prompts.push({ heat:'hot', icon:'⏱️', action:'Set a 5-minute countdown goal',
+      reason: burstReason,
+      value: Math.round(tph * 0.17 * (phase === 'peak' ? pw.audience : pw.whale)), tag:'momentum' });
+  }
+
+  if (tippers.length >= 3 && totalTips > 40 && phase !== 'warming') {
     const top = tippers[0];
-    prompts.push({ heat:'medium', icon:'🏆', action:'Thank ' + top.username + ' as top tipper', reason: 'Public recognition drives repeat tips', value: Math.round(top.tips * 0.2 + 10) });
+    prompts.push({ heat:'medium', icon:'🏆', action:'Thank ' + top.username + ' as top tipper publicly',
+      reason: phase === 'peak' ? 'Public recognition during peak triggers copycat tipping' : 'Social proof drives repeat tips from others',
+      value: Math.round((top.tips*0.2+10) * pw.audience), tag:'audience' });
   }
 
-  if (viewers > 100 && tippers.length < 5) {
-    prompts.push({ heat:'hot', icon:'🎪', action:'Tease an exclusive unlock goal', reason: 'Large room with few tippers — create urgency', value: Math.round(viewers * 0.03 * 10) });
+  if (viewers > 80 && tippers.length < 4 && phase !== 'warming') {
+    prompts.push({ heat:'hot', icon:'🎪', action:'Tease an exclusive unlock — big room, few tippers',
+      reason: 'Large audience with low conversion — urgency prompt converts fence-sitters',
+      value: Math.round(viewers * 0.03 * 10 * pw.audience), tag:'audience' });
   }
 
+  // ── Fallback ──────────────────────────────────────────────────────────────
   if (prompts.length === 0) {
     if (viewers > 0) {
-      prompts.push({ heat:'', icon:'👋', action:'Greet new viewers and mention your tip menu', reason: 'Building rapport converts first-timers', value: 10 });
-      prompts.push({ heat:'', icon:'💬', action:'Ask viewers what they want to see', reason: 'Engagement question boosts tip intent', value: 8 });
+      prompts.push({ heat:'', icon:'👋', action:'Greet viewers and introduce your tip menu', reason:'Building rapport early converts first-timers', value:10, tag:'audience' });
+      prompts.push({ heat:'', icon:'💬', action:'Ask viewers what they want to see', reason:'Engagement question primes tip intent', value:8, tag:'audience' });
     } else {
-      prompts.push({ heat:'', icon:'⏳', action:'Waiting for viewers to load…', reason: 'Data will appear shortly', value: 0 });
+      prompts.push({ heat:'', icon:'⏳', action:'Waiting for viewers to load…', reason:'Data will appear shortly', value:0, tag:'' });
     }
   }
 
-  // Sort by value descending, cap at 4
+  // Sort by value, cap at 4
   prompts.sort((a,b) => b.value - a.value);
-  const top4 = prompts.slice(0, 4);
-
-  promptSec.innerHTML = top4.map(function(p) {
+  promptSec.innerHTML = prompts.slice(0,4).map(function(p) {
     return '<div class="prompt-card ' + (p.heat||'') + '">' +
       '<div class="pe">' + p.icon + '</div>' +
       '<div><div class="pa">' + p.action + '</div><div class="pm">' + p.reason + '</div></div>' +
-      (p.value > 0 ? '<div class="pv">+$' + p.value + '</div>' : '') +
+      (p.value > 0 ? '<div class="pv">+' + p.value + ' tk</div>' : '') +
       '</div>';
   }).join('');
 }
@@ -567,7 +690,7 @@ function updatePricing(data) {
     var baseRec = viewers > 100 ? 15 : viewers > 50 ? 10 : viewers > 20 ? 8 : 5;
     recommended    = baseRec;
     maxRecommended = Math.round(baseRec * 1.8);
-    insight = viewers + ' viewers in room — set your tip floor to ' + recommended + ' tokens to start converting';
+    insight = 'You have ' + viewers + ' people watching but no one has tipped yet. Post your tip menu in chat and tell viewers the smallest tip you\'ll accept is ' + recommended + ' tokens — giving people a clear number to act on is what gets the first tip.';
     curEl.textContent = 'None yet';
   } else {
     // Have real tip data
@@ -579,17 +702,17 @@ function updatePricing(data) {
 
     // Build insight message
     if (demandScore >= 70 && recommended > (currentFloor || 0)) {
-      insight = 'High demand (' + demandScore + '/100) — raise your floor to ' + recommended + ' tokens now';
+      insight = 'Your room is active and tips are coming in. This is a good moment to raise your minimum tip — say out loud or type in chat: "minimum tip is now ' + recommended + ' tokens." Viewers are engaged right now and more likely to go along with it.';
     } else if (whales.length >= 2 && avgTip < 50) {
-      insight = whales.length + ' whales present — consider a ' + recommended + ' token floor or exclusive offer';
+      insight = 'You have ' + whales.length + ' big spenders in the room right now. Try announcing a special one-time offer — say something like: "First person to tip ' + recommended + ' tokens gets [something exclusive]." Big spenders respond well to limited offers aimed at them.';
     } else if (convRate > 5) {
-      insight = 'Strong ' + convRate + '% conversion — your audience will support a ' + recommended + ' token floor';
+      insight = convRate + '% of your viewers have already tipped — that\'s a strong, generous crowd. You can safely raise your minimum tip to ' + recommended + ' tokens. Say in chat: "Raising my tip menu — minimum is now ' + recommended + ' tokens, thank you all!"';
     } else if (convRate < 2 && tippers.length > 0) {
-      insight = 'Low conversion at ' + convRate + '% — keep floor at ' + recommended + ' tokens to encourage more tippers';
+      insight = 'Most viewers haven\'t tipped yet. Keep your minimum tip low at ' + recommended + ' tokens to make it easy for people to start. Post your tip menu in chat and say: "Even a small tip means a lot!" — once someone tips once, they almost always tip again.';
     } else if (tph > 200) {
-      insight = 'Earning $' + tph + '/hr — demand supports a ' + recommended + ' token floor';
+      insight = 'Tips are coming in quickly — great momentum. While the room is active, type in chat: "tip ' + recommended + ' tokens to [something you offer]!" Posting a specific number while people are already tipping gets more people to join in.';
     } else {
-      insight = 'Based on ' + tipEvents.length + ' tips averaging ' + avgTip + ' tokens — ' + recommended + ' token floor recommended';
+      insight = 'Based on ' + tipEvents.length + ' tips so far (average tip: ' + avgTip + ' tokens), ' + recommended + ' tokens fits what your viewers are willing to spend. Post your tip menu in chat now to remind people what they can tip for — most viewers need a reminder to act.';
     }
   }
 
@@ -617,8 +740,8 @@ function getAnalyticsPage() {
   <div class="an-sub" id="an-session-time">Session started just now</div>
 </div>
 <div class="an-grid">
-  <div class="an-card c1"><div class="an-card-lbl">Total Earned</div><div class="an-card-val" id="an-total">0<span> tk</span></div><div class="an-card-sub" id="an-total-sub">this session</div></div>
-  <div class="an-card c2"><div class="an-card-lbl">Viewers</div><div class="an-card-val" id="an-viewers">0</div><div class="an-card-sub" id="an-viewers-sub">in room now</div></div>
+  <div class="an-card c1"><div class="an-card-lbl">Total Tokens Earned</div><div class="an-card-val" id="an-total">0<span> tk</span></div><div class="an-card-sub" id="an-total-sub">session token total</div></div>
+  <div class="an-card c2"><div class="an-card-lbl">Current Viewers</div><div class="an-card-val" id="an-viewers">0</div><div class="an-card-sub" id="an-viewers-sub">in room right now</div></div>
   <div class="an-card c3"><div class="an-card-lbl">Conversion</div><div class="an-card-val" id="an-conv">0<span>%</span></div><div class="an-card-sub" id="an-conv-sub">viewers who tipped</div></div>
   <div class="an-card c4"><div class="an-card-lbl">Avg Tip</div><div class="an-card-val" id="an-avg">—<span></span></div><div class="an-card-sub" id="an-avg-sub">per transaction</div></div>
   <div class="an-card c5"><div class="an-card-lbl">Tip Rate</div><div class="an-card-val" id="an-tph">0<span>/hr</span></div><div class="an-card-sub" id="an-tph-sub">tokens per hour</div></div>
@@ -689,7 +812,7 @@ function updateAnalytics(data) {
   set('an-avg',           avgTip > 0 ? avgTip : '—');
   set('an-tph',           tph);
   set('an-tippers',       tippers.length);
-  set('an-viewers-sub',   viewers === 1 ? '1 viewer now' : viewers + ' viewers now');
+  set('an-viewers-sub',   viewers === 1 ? '1 person in room right now' : viewers + ' people in room right now');
   set('an-conv-sub',      tippers.length + ' of ' + viewers + ' tipped');
   set('an-avg-sub',       amounts.length + ' transactions');
   set('an-tph-sub',       tph > 100 ? '🔥 Hot pace' : tph > 0 ? 'Good pace' : 'No tips yet');
@@ -727,6 +850,147 @@ function updateAnalytics(data) {
 // ── Fan leaderboard with filters + 30-day history ────────────────────────────
 var fanFilter = 'all';
 var thirtyDayHistory = {}; // { username: totalTips30d } — persisted in storage
+var storageUsername = ''; // current broadcaster — used to namespace storage keys
+function getHistoryKey()  { return storageUsername ? 'apex_' + storageUsername + '_30dHistory' : 'apex30dHistory'; }
+function getSettingsKey() { return storageUsername ? 'apex_' + storageUsername + '_settings'   : 'apexSettings'; }
+function getPinKey()      { return storageUsername ? 'apex_' + storageUsername + '_pin'       : 'apex_pin'; }
+
+// ── Auth check helpers for overlay ───────────────────────────────────────────
+// The overlay trusts the session presence from chrome.storage (set by the popup).
+// It does NOT re-call Supabase itself — keeping the overlay lightweight.
+
+function showOverlayAuthWall(message) {
+  document.body.innerHTML =
+    '<div style="position:fixed;inset:0;background:#0f0f13;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:Manrope,sans-serif;padding:24px;">' +
+      '<div style="font-size:32px;">🔒</div>' +
+      '<div style="font-size:16px;font-weight:700;color:#e5e7eb;text-align:center;">Apex Revenue</div>' +
+      '<div style="font-size:13px;color:#9ca3af;text-align:center;max-width:260px;line-height:1.6;">' + message + '</div>' +
+      '<div style="font-size:11px;color:#6b7280;text-align:center;margin-top:8px;">Open the Apex Revenue extension popup to sign in.</div>' +
+    '</div>';
+}
+
+function verifyOverlayAuth(onVerified) {
+  chrome.storage.local.get(['apexSession', 'apexLinkedAccounts', 'apexCurrentUser'], function(r) {
+    // No session — user needs to log in via popup
+    if (!r.apexSession || !r.apexSession.access_token) {
+      showOverlayAuthWall('Sign in to your Apex Revenue account to access the overlay.');
+      return;
+    }
+    var linked = r.apexLinkedAccounts || [];
+    var detectedUser = r.apexCurrentUser || storageUsername || '';
+    // If there are linked accounts but none match the current streamer, show mismatch
+    if (linked.length > 0 && detectedUser) {
+      var dn = detectedUser.toLowerCase();
+      var matched = linked.some(function(a){ return a.username === dn; });
+      if (!matched) {
+        showOverlayAuthWall(
+          'This extension is registered to a different account. ' +
+          'The current stream (@' + detectedUser + ') is not linked. ' +
+          'Open the popup to add this account or sign in.'
+        );
+        return;
+      }
+    }
+    onVerified();
+  });
+}
+
+// Hash a PIN string to hex using Web Crypto (available in extension context)
+function hashPin(pin, callback) {
+  var encoded = new TextEncoder().encode(pin);
+  crypto.subtle.digest('SHA-256', encoded).then(function(buf) {
+    var hex = Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+    callback(hex);
+  });
+}
+
+// Show the PIN lock overlay; calls onUnlock() when correct PIN entered
+function showPinLock(storedHash, onUnlock) {
+  var overlay = document.createElement('div');
+  overlay.id = 'pin-lock-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:var(--bg,#0f0f13);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+  overlay.innerHTML = `
+    <div style="font-size:22px;font-weight:700;color:#e5e7eb;letter-spacing:.3px;">🔐 Apex Revenue</div>
+    <div style="font-size:13px;color:#6b7280;">Enter your PIN to continue</div>
+    <div id="pin-dots" style="display:flex;gap:14px;margin:6px 0;">
+      <div class="pin-dot" style="width:14px;height:14px;border-radius:50%;border:2px solid #374151;transition:background .15s;"></div>
+      <div class="pin-dot" style="width:14px;height:14px;border-radius:50%;border:2px solid #374151;transition:background .15s;"></div>
+      <div class="pin-dot" style="width:14px;height:14px;border-radius:50%;border:2px solid #374151;transition:background .15s;"></div>
+      <div class="pin-dot" style="width:14px;height:14px;border-radius:50%;border:2px solid #374151;transition:background .15s;"></div>
+    </div>
+    <div id="pin-err" style="font-size:12px;color:#ef4444;height:16px;text-align:center;"></div>
+    <div id="pin-pad" style="display:grid;grid-template-columns:repeat(3,56px);gap:10px;">
+      ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(function(k){
+        var empty = k === '';
+        return `<button data-k="${k}" ${empty ? 'disabled style="visibility:hidden"' : `style="background:var(--surface-2,#1e1e2a);border:1px solid var(--border,#2a2a38);color:#e5e7eb;border-radius:10px;font-size:20px;font-weight:600;padding:14px 0;cursor:pointer;width:56px;"`}>${k}</button>`;
+      }).join('')}
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  var entered = '';
+  var dots = overlay.querySelectorAll('.pin-dot');
+  var errEl = overlay.querySelector('#pin-err');
+
+  function updateDots() {
+    dots.forEach(function(d, i) {
+      d.style.background = i < entered.length ? '#8b5cf6' : 'transparent';
+    });
+  }
+
+  function shake() {
+    dots.forEach(function(d){ d.style.background = '#ef4444'; });
+    setTimeout(function(){
+      entered = '';
+      updateDots();
+      errEl.textContent = 'Incorrect PIN — try again';
+    }, 400);
+  }
+
+  overlay.querySelector('#pin-pad').addEventListener('click', function(ev) {
+    var btn = ev.target.closest('button');
+    if (!btn || btn.disabled) return;
+    var key = btn.getAttribute('data-k');
+    if (key === '⌫') {
+      entered = entered.slice(0, -1);
+      errEl.textContent = '';
+      updateDots();
+      return;
+    }
+    if (entered.length >= 4) return;
+    entered += key;
+    updateDots();
+    if (entered.length === 4) {
+      hashPin(entered, function(hash) {
+        if (hash === storedHash) {
+          overlay.remove();
+          onUnlock();
+        } else {
+          shake();
+        }
+      });
+    }
+  });
+}
+
+// Load data after PIN (or immediately if no PIN)
+function loadApexData() {
+  var histKey = getHistoryKey();
+  chrome.storage.local.get([histKey, 'apexLiveData'], function(result) {
+    if (result[histKey]) {
+      thirtyDayHistory = result[histKey];
+      Object.keys(thirtyDayHistory).forEach(function(u) {
+        thirtyDayHistory[u].sessionSnapshot = 0;
+      });
+    }
+    if (result.apexLiveData) applyLiveData(result.apexLiveData);
+  });
+  setInterval(function() {
+    chrome.storage.local.get(['apexLiveData'], function(result) {
+      if (result.apexLiveData) applyLiveData(result.apexLiveData);
+    });
+  }, 3000);
+}
 
 // 30d history is loaded together with live data below (see boot load block)
 
@@ -735,23 +999,23 @@ function merge30dHistory(fans) {
   var now = Date.now();
   var THIRTY_DAYS = 30 * 24 * 3600 * 1000;
   fans.forEach(function(f) {
-    if (f.tips <= 0) return;
+    // Track ALL fans — create entry if not exists, always refresh lastSeen
     if (!thirtyDayHistory[f.username]) {
       thirtyDayHistory[f.username] = { total: 0, lastSeen: now };
     }
-    // Update if session tip is higher (avoids double-counting across page reloads)
-    if (f.tips > (thirtyDayHistory[f.username].sessionSnapshot || 0)) {
+    thirtyDayHistory[f.username].lastSeen = now;
+    // Only accumulate tip totals for users who have actually tipped
+    if (f.tips > 0 && f.tips > (thirtyDayHistory[f.username].sessionSnapshot || 0)) {
       var delta = f.tips - (thirtyDayHistory[f.username].sessionSnapshot || 0);
       thirtyDayHistory[f.username].total += delta;
       thirtyDayHistory[f.username].sessionSnapshot = f.tips;
-      thirtyDayHistory[f.username].lastSeen = now;
     }
   });
-  // Prune stale entries
+  // Prune entries not seen in 30 days
   Object.keys(thirtyDayHistory).forEach(function(u) {
     if (now - thirtyDayHistory[u].lastSeen > THIRTY_DAYS) delete thirtyDayHistory[u];
   });
-  chrome.storage.local.set({ apex30dHistory: thirtyDayHistory });
+  var _hk = getHistoryKey(); var _obj = {}; _obj[_hk] = thirtyDayHistory; chrome.storage.local.set(_obj);
 }
 
 function renderFanRows(list, label) {
@@ -867,12 +1131,15 @@ function updateFans(data) {
   }
 
   if (fanFilter === 'inroom') {
-    list  = fans.filter(function(f){ return f.present !== false; })
-                .sort(function(a,b){ return b.tips - a.tips; });
-    label = 'Viewers currently in room';
+    // Use presentFans (all present users, uncapped) — tippers only
+    var roomList = (data.presentFans && data.presentFans.length > 0)
+              ? data.presentFans
+              : fans.filter(function(f){ return f.present !== false; }).sort(function(a,b){ return b.tips - a.tips; });
+    list  = roomList.filter(function(f){ return f.tips > 0; });
+    label = 'Tippers currently in room';
   } else if (fanFilter === 'top30') {
-    // Only fans who appear in 30d history
-    list  = build30dList(function(f){ return thirtyDayHistory[f.username]; });
+    // Only fans with a positive 30d tip total
+    list  = build30dList(function(f){ return thirtyDayHistory[f.username] && thirtyDayHistory[f.username].total > 0; });
     label = 'Top tippers — last 30 days';
   } else if (fanFilter === 'new') {
     list = fans.filter(function(f){
@@ -880,8 +1147,8 @@ function updateFans(data) {
     });
     label = 'New viewers (no prior tips)';
   } else {
-    // All — 30-day rank: history fans + current session fans, sorted by 30d total
-    list  = build30dList(null);
+    // All — tippers only, ranked by 30-day total
+    list  = build30dList(function(f){ return f.displayTips > 0; });
     label = 'Ranked by 30-day tips';
   }
 
@@ -972,6 +1239,18 @@ function getSettingsPage() {
   <div class="set-saved" id="set-saved-msg">✓ Settings saved</div>
   <button class="set-btn" id="set-save-btn">Save Settings</button>
   <button class="set-btn ghost" id="set-clear-btn">Clear 30-day History</button>
+
+  <div class="set-sec">PIN Lock</div>
+  <div class="set-row" style="flex-direction:column;align-items:flex-start;gap:8px">
+    <div style="font-size:12px;color:var(--fg-muted)">Lock the overlay with a 4-digit PIN. Each Chaturbate account gets its own PIN.</div>
+    <div style="display:flex;gap:8px;width:100%">
+      <input type="password" id="set-pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="New PIN (4 digits)" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--fg);padding:8px 12px;font-size:14px;outline:none;">
+      <button class="set-btn" id="set-pin-btn">Set PIN</button>
+    </div>
+    <button class="set-btn ghost" id="set-pin-remove-btn" style="display:none">Remove PIN</button>
+    <div id="set-pin-msg" style="font-size:12px;color:var(--green);display:none"></div>
+  </div>
+
   <div class="set-ver">Apex Revenue v0.5.1 · Creator Intelligence Engine</div>
 </div>`;
 }
@@ -979,8 +1258,9 @@ function getSettingsPage() {
 function initSettings() {
   // Load saved settings
   if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.local.get(['apexSettings'], function(r) {
-      var s = r.apexSettings || {};
+    var _sk = getSettingsKey();
+    chrome.storage.local.get([_sk], function(r) {
+      var s = r[_sk] || {};
       if (s.whaleThreshold) document.getElementById('set-whale-threshold').value = s.whaleThreshold;
       if (s.whaleAlert    !== undefined) document.getElementById('set-whale-alert').checked   = s.whaleAlert;
       if (s.promptFreq)    document.getElementById('set-prompt-freq').value    = s.promptFreq;
@@ -1004,7 +1284,7 @@ function initSettings() {
         autoMin:        document.getElementById('set-auto-min').checked,
         saveHistory:    document.getElementById('set-save-history').checked,
       };
-      chrome.storage.local.set({ apexSettings: settings });
+      var _saveKey = getSettingsKey(); var _saveObj = {}; _saveObj[_saveKey] = settings; chrome.storage.local.set(_saveObj);
 
       // Apply opacity immediately to parent frame
       window.parent.postMessage({ source: 'apex-overlay', type: 'SET_OPACITY', value: settings.opacity }, '*');
@@ -1019,10 +1299,55 @@ function initSettings() {
   if (clearBtn) {
     clearBtn.addEventListener('click', function() {
       thirtyDayHistory = {};
-      chrome.storage.local.remove(['apex30dHistory']);
+      chrome.storage.local.remove([getHistoryKey()]);
       clearBtn.textContent = '✓ History cleared';
       clearBtn.style.color = 'var(--green)';
       setTimeout(function(){ clearBtn.textContent = 'Clear 30-day History'; clearBtn.style.color = ''; }, 2000);
+    });
+  }
+
+  // PIN lock buttons
+  var pinInput     = document.getElementById('set-pin-input');
+  var pinBtn       = document.getElementById('set-pin-btn');
+  var pinRemoveBtn = document.getElementById('set-pin-remove-btn');
+  var pinMsg       = document.getElementById('set-pin-msg');
+
+  function showPinMsg(txt, isErr) {
+    if (!pinMsg) return;
+    pinMsg.textContent = txt;
+    pinMsg.style.color = isErr ? 'var(--red, #ef4444)' : 'var(--green)';
+    pinMsg.style.display = 'block';
+    setTimeout(function(){ pinMsg.style.display = 'none'; }, 2500);
+  }
+
+  // Check existing PIN state
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    chrome.storage.local.get([getPinKey()], function(r) {
+      if (r[getPinKey()] && pinRemoveBtn) pinRemoveBtn.style.display = '';
+    });
+  }
+
+  if (pinBtn) {
+    pinBtn.addEventListener('click', function() {
+      var pin = pinInput ? pinInput.value.trim() : '';
+      if (!/^\d{4}$/.test(pin)) { showPinMsg('PIN must be exactly 4 digits', true); return; }
+      hashPin(pin, function(hash) {
+        var obj = {}; obj[getPinKey()] = hash;
+        chrome.storage.local.set(obj, function() {
+          showPinMsg('PIN set successfully ✓', false);
+          if (pinInput) pinInput.value = '';
+          if (pinRemoveBtn) pinRemoveBtn.style.display = '';
+        });
+      });
+    });
+  }
+
+  if (pinRemoveBtn) {
+    pinRemoveBtn.addEventListener('click', function() {
+      chrome.storage.local.remove([getPinKey()], function() {
+        showPinMsg('PIN removed', false);
+        pinRemoveBtn.style.display = 'none';
+      });
     });
   }
 }

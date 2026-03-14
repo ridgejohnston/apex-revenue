@@ -1,0 +1,95 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Apex Revenue — Supabase Database Setup
+-- Run this entire script in: Supabase Dashboard → SQL Editor → New Query
+-- ═══════════════════════════════════════════════════════════════════════════
+
+
+-- ── 1. Profiles (extends Supabase auth.users) ────────────────────────────────
+create table if not exists profiles (
+  id          uuid references auth.users(id) on delete cascade primary key,
+  created_at  timestamptz default now() not null
+);
+
+-- Auto-create profile when a new user signs up
+create or replace function handle_new_user()
+returns trigger language plpgsql security definer as $$
+begin
+  insert into public.profiles (id) values (new.id) on conflict do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure handle_new_user();
+
+
+-- ── 2. Platform accounts (Chaturbate / Stripchat / etc.) ────────────────────
+create table if not exists platform_accounts (
+  id          uuid default gen_random_uuid() primary key,
+  user_id     uuid references profiles(id) on delete cascade not null,
+  platform    text not null,           -- 'chaturbate', 'stripchat', 'myfreecams', 'xtease'
+  username    text not null,           -- lowercase streaming username
+  linked_at   timestamptz default now() not null,
+  unique(user_id, platform, username)
+);
+
+
+-- ── 3. Fan history (30-day rolling cloud storage) ────────────────────────────
+create table if not exists fan_history (
+  id           uuid default gen_random_uuid() primary key,
+  user_id      uuid references profiles(id) on delete cascade not null,
+  platform     text not null,
+  fan_username text not null,
+  total_tokens integer default 0 not null,
+  last_seen    timestamptz,
+  updated_at   timestamptz default now() not null,
+  unique(user_id, platform, fan_username)
+);
+
+-- Index for fast queries
+create index if not exists idx_fan_history_user_platform on fan_history(user_id, platform);
+create index if not exists idx_fan_history_updated on fan_history(updated_at);
+
+-- Auto-prune rows older than 30 days (runs via pg_cron if enabled, or manually)
+-- To enable pg_cron: Supabase Dashboard → Database → Extensions → pg_cron
+-- select cron.schedule('prune-fan-history', '0 3 * * *', $$
+--   delete from fan_history where last_seen < now() - interval '30 days';
+-- $$);
+
+
+-- ── 4. Row Level Security ────────────────────────────────────────────────────
+alter table profiles         enable row level security;
+alter table platform_accounts enable row level security;
+alter table fan_history       enable row level security;
+
+-- Profiles: users can only read/write their own row
+create policy "Users own their profile"
+  on profiles for all
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+
+-- Platform accounts: users can only access their own linked accounts
+create policy "Users own their platform accounts"
+  on platform_accounts for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Fan history: users can only access their own fan data
+create policy "Users own their fan history"
+  on fan_history for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- SETUP COMPLETE
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Next step: get your project URL and anon key from:
+--   Supabase Dashboard → Settings → API
+--
+-- Then open Apex-Revenue/auth.js and replace:
+--   var APEX_SUPABASE_URL      = 'https://YOUR_PROJECT_ID.supabase.co';
+--   var APEX_SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+-- ═══════════════════════════════════════════════════════════════════════════

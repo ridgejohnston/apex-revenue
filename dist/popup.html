@@ -97,6 +97,15 @@ body {
   position: relative; z-index: 1;
 }
 
+/* ── Offline dashboard ── */
+.offline-acct-name { font-size:15px;font-weight:700;color:var(--purple);letter-spacing:-.2px; }
+.offline-acct-sub  { font-size:11px;color:var(--muted);margin-top:2px; }
+.offline-fan-row   { display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05); }
+.offline-fan-row:last-child { border-bottom:none; }
+.offline-fan-rank  { font-size:11px;color:var(--muted);width:18px;flex-shrink:0; }
+.offline-fan-name  { flex:1;font-size:13px;color:var(--text);font-weight:500;padding:0 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.offline-fan-tips  { font-size:13px;color:var(--gold);font-weight:600;flex-shrink:0; }
+
 /* ── Bottom Nav ── */
 .bottom-nav {
   display: flex; background: var(--surface);
@@ -401,9 +410,179 @@ body {
 /* ── Page visibility ── */
 .page { display: none; }
 .page.active { display: block; }
+
+/* ── Auth Gate ── */
+.auth-gate {
+  position: fixed; inset: 0; z-index: 10000;
+  background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px 20px; gap: 0;
+  overflow-y: auto;
+}
+.auth-gate.hidden { display: none; }
+
+.auth-logo-wrap { display: flex; align-items: center; gap: 11px; margin-bottom: 28px; }
+.auth-logo-img  { width: 40px; height: 40px; border-radius: 10px; }
+.auth-logo-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: var(--text); }
+.auth-logo-sub  { font-size: 8px; color: var(--muted); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-top: 1px; }
+
+.auth-tabs { display: flex; gap: 0; width: 100%; margin-bottom: 20px; background: var(--surface2); border-radius: 10px; padding: 3px; }
+.auth-tab  { flex: 1; padding: 8px; border: none; background: transparent; color: var(--muted); font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; font-family: inherit; transition: all .15s; }
+.auth-tab.active { background: var(--surface3); color: var(--text); }
+
+.auth-input {
+  width: 100%; padding: 11px 14px; margin-bottom: 10px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--text); font-size: 13px;
+  font-family: inherit; outline: none; box-sizing: border-box;
+  transition: border-color .15s;
+}
+.auth-input:focus { border-color: var(--purple); }
+
+.auth-error { font-size: 12px; color: var(--accent); min-height: 16px; margin-bottom: 8px; text-align: center; }
+.auth-success { font-size: 12px; color: var(--green); min-height: 16px; margin-bottom: 8px; text-align: center; }
+
+.auth-submit-btn {
+  width: 100%; padding: 12px; border: none;
+  background: linear-gradient(135deg, #7c5cfc, #ff3f6c);
+  color: #fff; font-size: 14px; font-weight: 700;
+  border-radius: 10px; cursor: pointer; font-family: inherit;
+  transition: opacity .15s;
+}
+.auth-submit-btn:hover { opacity: .9; }
+.auth-submit-btn:disabled { opacity: .5; cursor: default; }
+
+.auth-divider { width: 100%; height: 1px; background: var(--border); margin: 16px 0; }
+.auth-footnote { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5; }
+
+.auth-step { display: none; width: 100%; max-width: 320px; }
+.auth-step.active { display: block; }
+
+.auth-step-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; text-align: center; }
+.auth-step-sub   { font-size: 12px; color: var(--text2); margin-bottom: 20px; text-align: center; line-height: 1.5; }
+
+.platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.platform-opt  {
+  padding: 10px 8px; border: 1px solid var(--border2); border-radius: 10px;
+  background: var(--surface2); color: var(--text2); font-size: 12px;
+  font-weight: 600; cursor: pointer; font-family: inherit; text-align: center;
+  transition: all .15s;
+}
+.platform-opt.active { border-color: var(--purple); color: var(--purple); background: rgba(124,92,252,.1); }
+
+.auth-linked-accounts { width: 100%; margin-bottom: 14px; }
+.auth-linked-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--surface2); border-radius: 8px; margin-bottom: 6px; }
+.auth-linked-name { font-size: 13px; color: var(--text); font-weight: 500; }
+.auth-linked-platform { font-size: 11px; color: var(--muted); }
+.auth-linked-remove { font-size: 11px; color: var(--accent); cursor: pointer; background: none; border: none; font-family: inherit; }
+
+.auth-user-info { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--surface2); border-radius: 10px; margin-bottom: 16px; width: 100%; }
+.auth-user-email { font-size: 12px; color: var(--text2); }
+.auth-signout-btn { font-size: 11px; color: var(--muted); background: none; border: none; cursor: pointer; font-family: inherit; }
+.auth-signout-btn:hover { color: var(--accent); }
+
+.auth-add-more { font-size: 12px; color: var(--purple); cursor: pointer; text-align: center; margin-top: 4px; }
+
+.auth-mismatch-icon  { font-size: 36px; text-align: center; margin-bottom: 10px; }
+.auth-mismatch-title { font-size: 16px; font-weight: 700; color: var(--text); text-align: center; margin-bottom: 8px; }
+.auth-mismatch-sub   { font-size: 12px; color: var(--text2); text-align: center; line-height: 1.5; margin-bottom: 20px; }
 </style>
 </head>
 <body>
+
+<!-- ── Auth Gate (covers everything until logged in) ── -->
+<div id="auth-gate" class="auth-gate hidden">
+
+  <!-- Step 1: Register / Sign In -->
+  <div id="auth-step-1" class="auth-step active">
+    <div class="auth-logo-wrap">
+      <img src="icons/icon128.png" class="auth-logo-img" id="auth-logo-img">
+      <div>
+        <div class="auth-logo-name">Apex Revenue</div>
+        <div class="auth-logo-sub">Creator Intelligence Engine</div>
+      </div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-signin">Sign In</button>
+      <button class="auth-tab" id="tab-register">Create Account</button>
+    </div>
+    <input type="email" id="auth-email" class="auth-input" placeholder="Email address" autocomplete="email">
+    <input type="password" id="auth-password" class="auth-input" placeholder="Password" autocomplete="current-password">
+    <div id="auth-error" class="auth-error"></div>
+    <button id="auth-submit-btn" class="auth-submit-btn">Sign In</button>
+    <div class="auth-divider"></div>
+    <div class="auth-footnote">Your data is encrypted and linked to your account.<br>Each installation is exclusively yours.</div>
+  </div>
+
+  <!-- Step 2: Link Streaming Account -->
+  <div id="auth-step-2" class="auth-step">
+    <div class="auth-logo-wrap">
+      <img src="icons/icon128.png" class="auth-logo-img" id="auth-logo-img2">
+      <div>
+        <div class="auth-logo-name">Apex Revenue</div>
+        <div class="auth-logo-sub">Creator Intelligence Engine</div>
+      </div>
+    </div>
+    <div class="auth-step-title">Link Your Stream Account</div>
+    <div class="auth-step-sub">Connect your streaming platform so this extension works exclusively for your account. No one else can access your data.</div>
+    <div class="platform-grid">
+      <button class="platform-opt active" data-platform="chaturbate">Chaturbate</button>
+      <button class="platform-opt" data-platform="stripchat">Stripchat</button>
+      <button class="platform-opt" data-platform="myfreecams">MyFreeCams</button>
+      <button class="platform-opt" data-platform="xtease">XTease</button>
+    </div>
+    <input type="text" id="auth-platform-username" class="auth-input" placeholder="Your streaming username" autocomplete="off" spellcheck="false">
+    <div id="auth-link-error" class="auth-error"></div>
+    <button id="auth-link-btn" class="auth-submit-btn">Link Account & Continue</button>
+    <div style="margin-top:10px;text-align:center">
+      <span id="auth-link-skip" style="font-size:11px;color:var(--muted);cursor:pointer;">Skip for now →</span>
+    </div>
+  </div>
+
+  <!-- Step 3: Manage linked accounts (shown when already logged in) -->
+  <div id="auth-step-3" class="auth-step">
+    <div class="auth-logo-wrap">
+      <img src="icons/icon128.png" class="auth-logo-img" id="auth-logo-img3">
+      <div>
+        <div class="auth-logo-name">Apex Revenue</div>
+        <div class="auth-logo-sub">Creator Intelligence Engine</div>
+      </div>
+    </div>
+    <div id="auth-user-bar" class="auth-user-info">
+      <span class="auth-user-email" id="auth-user-email-label">—</span>
+      <button class="auth-signout-btn" id="auth-signout-btn">Sign Out</button>
+    </div>
+    <div class="auth-step-title" style="text-align:left;font-size:15px;margin-bottom:12px">Linked Accounts</div>
+    <div id="auth-linked-list" class="auth-linked-accounts"></div>
+    <div class="auth-divider"></div>
+    <div class="auth-step-title" style="text-align:left;font-size:13px;margin-bottom:10px">Add Another Account</div>
+    <div class="platform-grid" id="auth-add-platform-grid">
+      <button class="platform-opt active" data-platform="chaturbate">Chaturbate</button>
+      <button class="platform-opt" data-platform="stripchat">Stripchat</button>
+      <button class="platform-opt" data-platform="myfreecams">MyFreeCams</button>
+      <button class="platform-opt" data-platform="xtease">XTease</button>
+    </div>
+    <input type="text" id="auth-add-username" class="auth-input" placeholder="Streaming username" autocomplete="off">
+    <div id="auth-add-error" class="auth-error"></div>
+    <button id="auth-add-btn" class="auth-submit-btn">Link Account</button>
+    <div style="margin-top:10px;text-align:center">
+      <span id="auth-back-btn" style="font-size:12px;color:var(--purple);cursor:pointer;">← Back to App</span>
+    </div>
+  </div>
+
+  <!-- Account mismatch screen -->
+  <div id="auth-step-mismatch" class="auth-step">
+    <div class="auth-mismatch-icon">🔒</div>
+    <div class="auth-mismatch-title">Account Mismatch</div>
+    <div class="auth-mismatch-sub" id="auth-mismatch-msg">This extension is registered to a different account. Sign in with the correct account to continue.</div>
+    <button id="auth-mismatch-switch" class="auth-submit-btn">Sign In to a Different Account</button>
+    <div style="margin-top:10px;text-align:center">
+      <span id="auth-mismatch-link-btn" style="font-size:12px;color:var(--purple);cursor:pointer;">Link this account instead →</span>
+    </div>
+  </div>
+
+</div><!-- end auth-gate -->
+
 <div class="popup">
 
   <!-- Header -->
@@ -429,12 +608,22 @@ body {
       <div class="offplatform">
         <div class="offplatform-icon">⚡</div>
         <div class="offplatform-title">Go Live to Activate</div>
+        <div id="offline-account-info" style="margin:6px 0 2px;text-align:center;font-size:12px;color:var(--text2)"></div>
         <div class="offplatform-sub">Navigate to your streaming platform and Apex Revenue will start tracking your session automatically.</div>
         <div class="platform-chips">
           <a class="platform-chip" href="https://chaturbate.com" target="_blank">Chaturbate</a>
           <a class="platform-chip" href="https://stripchat.com" target="_blank">Stripchat</a>
           <a class="platform-chip" href="https://myfreecams.com" target="_blank">MyFreeCams</a>
           <a class="platform-chip" href="https://xtease.com" target="_blank">XTease</a>
+        </div>
+        <div id="offline-fans-section" style="width:100%;margin-top:18px;border-top:1px solid rgba(255,255,255,0.06);padding-top:14px">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Top Fans · 30-day History</div>
+          <div id="offline-fans-preview">
+            <div style="font-size:12px;color:var(--muted);text-align:center">No fan history yet</div>
+          </div>
+          <div style="margin-top:10px;text-align:center">
+            <button id="offline-view-fans-btn" style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--text2);border-radius:20px;padding:6px 16px;font-size:11px;cursor:pointer;">View Full Fan Leaderboard →</button>
+          </div>
         </div>
       </div>
     </div>
@@ -662,6 +851,7 @@ body {
         </div>
       </div>
       <button class="settings-reset-btn" id="settings-reset">Reset session data</button>
+      <button class="settings-reset-btn" id="settings-manage-accounts" style="margin-top:4px;color:var(--purple);border-color:rgba(124,92,252,.3);">Manage Linked Accounts →</button>
     </div><!-- end page-settings -->
 
     <!-- HELP PAGE -->
@@ -737,6 +927,7 @@ body {
 
 </div><!-- end popup -->
 
+<script src="auth.js"></script>
 <script src="popup-page.js"></script>
 </body>
 </html>

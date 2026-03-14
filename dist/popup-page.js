@@ -1,5 +1,10 @@
 
 let liveData = null;
+let thirtyDayHistory = {};
+let storageUsername = '';
+
+function getPopupHistoryKey()  { return storageUsername ? 'apex_' + storageUsername + '_30dHistory' : 'apex30dHistory'; }
+function getPopupSettingsKey() { return storageUsername ? 'apex_' + storageUsername + '_settings'   : 'apexSettings'; }
 let settings = { autoOpen: true, opacity: 90, whaleAlert: true, prompts: true, whaleThreshold: 50, aiPrice: true };
 let currentPage = 'live';
 let currentFilter = 'all';
@@ -7,6 +12,309 @@ let isOnPlatform = false;
 let peakViewers = 0;
 
 const PLATFORMS = { 'chaturbate.com': 'Chaturbate', 'stripchat.com': 'Stripchat', 'myfreecams.com': 'MyFreeCams', 'xtease.com': 'XTease' };
+
+// ── Auth state ─────────────────────────────────────────────────────────────────
+let authUser = null;         // logged-in Supabase user object or null
+let linkedAccounts = [];     // [{platform, username}] from Supabase
+let selectedAuthPlatform = 'chaturbate';   // platform picker in step 2
+let selectedAddPlatform  = 'chaturbate';   // platform picker in step 3
+let authMode = 'signin';     // 'signin' or 'register'
+
+
+// ── Auth gate controller ──────────────────────────────────────────────────────
+
+function showAuthGate(step) {
+  var gate = document.getElementById('auth-gate');
+  if (gate) gate.classList.remove('hidden');
+  ['auth-step-1','auth-step-2','auth-step-3','auth-step-mismatch'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  var target = document.getElementById(step || 'auth-step-1');
+  if (target) target.classList.add('active');
+}
+
+function hideAuthGate() {
+  var gate = document.getElementById('auth-gate');
+  if (gate) gate.classList.add('hidden');
+}
+
+function setAuthError(elId, msg) {
+  var el = document.getElementById(elId);
+  if (el) el.textContent = msg || '';
+}
+
+function setAuthBtnLoading(btnId, loading, label) {
+  var btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.textContent = loading ? 'Please wait...' : (label || btn.textContent);
+}
+
+// Render the linked accounts list in step 3
+function renderLinkedAccounts() {
+  var list = document.getElementById('auth-linked-list');
+  if (!list) return;
+  if (!linkedAccounts.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:10px 0">No accounts linked yet</div>';
+    return;
+  }
+  list.innerHTML = linkedAccounts.map(function(a) {
+    var platLabel = a.platform.charAt(0).toUpperCase() + a.platform.slice(1);
+    return '<div class="auth-linked-row">' +
+      '<div><div class="auth-linked-name">@' + escHtml(a.username) + '</div>' +
+      '<div class="auth-linked-platform">' + platLabel + '</div></div>' +
+      '<button class="auth-linked-remove" data-platform="' + a.platform + '" data-username="' + escHtml(a.username) + '">Remove</button>' +
+    '</div>';
+  }).join('');
+  list.querySelectorAll('.auth-linked-remove').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      var p = this.getAttribute('data-platform');
+      var u = this.getAttribute('data-username');
+      this.textContent = '...';
+      try {
+        linkedAccounts = await apexUnlinkPlatformAccount(p, u);
+        renderLinkedAccounts();
+      } catch(e) { this.textContent = 'Remove'; }
+    });
+  });
+}
+
+// Called after successful sign-in or sign-up
+async function onAuthSuccess(user) {
+  authUser = user;
+  var emailLabel = document.getElementById('auth-user-email-label');
+  if (emailLabel) emailLabel.textContent = user.email || '';
+  try { linkedAccounts = await apexGetLinkedAccounts(); } catch(e) { linkedAccounts = []; }
+  chrome.storage.local.set({ apexLinkedAccounts: linkedAccounts });
+  loadCloudFanHistory();
+  if (linkedAccounts.length === 0) {
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+      chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+        var url = (tabs[0] && tabs[0].url) || '';
+        var autoUser = '';
+        for (var domain in PLATFORMS) {
+          if (url.includes(domain)) {
+            try { var pu = new URL(url); autoUser = (pu.pathname.split('/')[1] || '').toLowerCase(); } catch(e) {}
+            break;
+          }
+        }
+        if (autoUser) {
+          var inp = document.getElementById('auth-platform-username');
+          if (inp) inp.value = autoUser;
+        }
+        showAuthGate('auth-step-2');
+      });
+    } else { showAuthGate('auth-step-2'); }
+  } else {
+    checkAccountMatch(function(match, detectedUser) {
+      if (!match && detectedUser) {
+        var msg = document.getElementById('auth-mismatch-msg');
+        if (msg) msg.textContent = 'The stream page you opened (@' + detectedUser + ') is not linked to this account. Add it in account settings or sign in with the correct account.';
+        showAuthGate('auth-step-mismatch');
+      } else {
+        hideAuthGate();
+        unlockApp();
+      }
+    });
+  }
+}
+
+// Check if the current active tab matches a linked account
+function checkAccountMatch(callback) {
+  if (typeof chrome === 'undefined' || !chrome.tabs) { callback(true, null); return; }
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    var url = (tabs[0] && tabs[0].url) || '';
+    var detectedUser = '';
+    var detectedPlatform = '';
+    for (var domain in PLATFORMS) {
+      if (url.includes(domain)) {
+        detectedPlatform = domain.replace('.com', '');
+        try { var pu2 = new URL(url); detectedUser = (pu2.pathname.split('/')[1] || '').toLowerCase(); } catch(e) {}
+        break;
+      }
+    }
+    if (!detectedUser) { callback(true, null); return; }
+    var match = apexIsPlatformLinked(detectedUser, linkedAccounts, detectedPlatform || 'chaturbate');
+    callback(match, detectedUser);
+  });
+}
+
+// Unlock the main app UI
+function unlockApp() {
+  hideAuthGate();
+  var cbAccount = linkedAccounts.find(function(a){ return a.platform === 'chaturbate'; });
+  if (cbAccount && !storageUsername) {
+    storageUsername = cbAccount.username;
+    chrome.storage.local.set({ apexCurrentUser: storageUsername });
+  }
+  chrome.storage.local.get([getPopupHistoryKey(), getPopupSettingsKey()], function(r) {
+    thirtyDayHistory = r[getPopupHistoryKey()] || {};
+    if (r[getPopupSettingsKey()]) { settings = Object.assign({}, settings, r[getPopupSettingsKey()]); applySettings(); }
+    updateOfflineAccountDisplay();
+    initPlatformDetection();
+  });
+}
+
+// Load fan history from Supabase and merge with local
+async function loadCloudFanHistory() {
+  try {
+    var cbAccount = linkedAccounts.find(function(a){ return a.platform === 'chaturbate'; });
+    if (!cbAccount) return;
+    var cloudHistory = await apexLoadFanHistory('chaturbate');
+    Object.keys(cloudHistory).forEach(function(u) {
+      if (!thirtyDayHistory[u] || thirtyDayHistory[u].total < cloudHistory[u].total) {
+        thirtyDayHistory[u] = cloudHistory[u];
+      }
+    });
+    var obj = {}; obj[getPopupHistoryKey()] = thirtyDayHistory;
+    chrome.storage.local.set(obj);
+    updateOfflineAccountDisplay();
+    if (currentPage === 'fans') renderFans();
+  } catch(e) { /* cloud sync is optional */ }
+}
+
+// Periodically sync fan history to cloud (every 5 minutes when active)
+function startCloudSyncInterval() {
+  setInterval(async function() {
+    if (!authUser) return;
+    var cbAccount = linkedAccounts.find(function(a){ return a.platform === 'chaturbate'; });
+    if (!cbAccount) return;
+    try { await apexSyncFanHistory(thirtyDayHistory, 'chaturbate'); } catch(e) { /* silent */ }
+  }, 5 * 60 * 1000);
+}
+
+// ── Auth gate event bindings ───────────────────────────────────────────────────
+function initAuthGate() {
+  ['auth-logo-img','auth-logo-img2','auth-logo-img3'].forEach(function(id) {
+    var img = document.getElementById(id);
+    if (img && typeof chrome !== 'undefined' && chrome.runtime) {
+      img.src = chrome.runtime.getURL('icons/icon128.png');
+    }
+  });
+
+  document.getElementById('tab-signin').addEventListener('click', function() {
+    authMode = 'signin';
+    document.getElementById('tab-signin').classList.add('active');
+    document.getElementById('tab-register').classList.remove('active');
+    document.getElementById('auth-submit-btn').textContent = 'Sign In';
+    document.getElementById('auth-password').setAttribute('autocomplete','current-password');
+    setAuthError('auth-error','');
+  });
+  document.getElementById('tab-register').addEventListener('click', function() {
+    authMode = 'register';
+    document.getElementById('tab-register').classList.add('active');
+    document.getElementById('tab-signin').classList.remove('active');
+    document.getElementById('auth-submit-btn').textContent = 'Create Account';
+    document.getElementById('auth-password').setAttribute('autocomplete','new-password');
+    setAuthError('auth-error','');
+  });
+
+  ['auth-email','auth-password'].forEach(function(id) {
+    document.getElementById(id).addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('auth-submit-btn').click();
+    });
+  });
+
+  document.getElementById('auth-submit-btn').addEventListener('click', async function() {
+    var email = (document.getElementById('auth-email').value || '').trim();
+    var pass  = (document.getElementById('auth-password').value || '');
+    setAuthError('auth-error','');
+    if (!email || !pass) { setAuthError('auth-error','Email and password are required'); return; }
+    if (authMode === 'register' && pass.length < 8) { setAuthError('auth-error','Password must be at least 8 characters'); return; }
+    setAuthBtnLoading('auth-submit-btn', true);
+    try {
+      var data = authMode === 'register' ? await apexSignUp(email, pass) : await apexSignIn(email, pass);
+      if (data.user || data.access_token) {
+        var user = data.user || await apexGetUser();
+        await onAuthSuccess(user);
+      } else {
+        setAuthError('auth-error', data.error_description || data.message || 'Authentication failed');
+      }
+    } catch(e) {
+      setAuthError('auth-error', e.message || 'Authentication failed. Check your credentials.');
+    } finally {
+      setAuthBtnLoading('auth-submit-btn', false, authMode === 'register' ? 'Create Account' : 'Sign In');
+    }
+  });
+
+  document.querySelectorAll('#auth-step-2 .platform-opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('#auth-step-2 .platform-opt').forEach(function(b){ b.classList.remove('active'); });
+      this.classList.add('active');
+      selectedAuthPlatform = this.getAttribute('data-platform');
+    });
+  });
+
+  document.getElementById('auth-link-btn').addEventListener('click', async function() {
+    var username = (document.getElementById('auth-platform-username').value || '').trim();
+    setAuthError('auth-link-error','');
+    if (!username) { setAuthError('auth-link-error','Enter your streaming username'); return; }
+    setAuthBtnLoading('auth-link-btn', true);
+    try {
+      linkedAccounts = await apexLinkPlatformAccount(selectedAuthPlatform, username);
+      hideAuthGate();
+      unlockApp();
+    } catch(e) {
+      setAuthError('auth-link-error', e.message || 'Failed to link account');
+    } finally {
+      setAuthBtnLoading('auth-link-btn', false, 'Link Account & Continue');
+    }
+  });
+
+  document.getElementById('auth-link-skip').addEventListener('click', function() {
+    hideAuthGate();
+    unlockApp();
+  });
+
+  document.getElementById('auth-signout-btn').addEventListener('click', async function() {
+    await apexSignOut();
+    authUser = null; linkedAccounts = [];
+    chrome.storage.local.remove(['apexLinkedAccounts']);
+    showAuthGate('auth-step-1');
+  });
+
+  document.querySelectorAll('#auth-add-platform-grid .platform-opt').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('#auth-add-platform-grid .platform-opt').forEach(function(b){ b.classList.remove('active'); });
+      this.classList.add('active');
+      selectedAddPlatform = this.getAttribute('data-platform');
+    });
+  });
+
+  document.getElementById('auth-add-btn').addEventListener('click', async function() {
+    var username = (document.getElementById('auth-add-username').value || '').trim();
+    setAuthError('auth-add-error','');
+    if (!username) { setAuthError('auth-add-error','Enter your streaming username'); return; }
+    setAuthBtnLoading('auth-add-btn', true);
+    try {
+      linkedAccounts = await apexLinkPlatformAccount(selectedAddPlatform, username);
+      document.getElementById('auth-add-username').value = '';
+      renderLinkedAccounts();
+      var addErr = document.getElementById('auth-add-error');
+      if (addErr) { addErr.style.color='var(--green)'; addErr.textContent='Account linked successfully'; setTimeout(function(){ addErr.textContent=''; addErr.style.color=''; },2500); }
+    } catch(e) {
+      setAuthError('auth-add-error', e.message || 'Failed to link account');
+    } finally {
+      setAuthBtnLoading('auth-add-btn', false, 'Link Account');
+    }
+  });
+
+  document.getElementById('auth-back-btn').addEventListener('click', function() { hideAuthGate(); });
+
+  document.getElementById('auth-mismatch-switch').addEventListener('click', async function() {
+    await apexSignOut(); authUser = null; linkedAccounts = [];
+    chrome.storage.local.remove(['apexLinkedAccounts']);
+    showAuthGate('auth-step-1');
+  });
+
+  document.getElementById('auth-mismatch-link-btn').addEventListener('click', function() {
+    showAuthGate('auth-step-3');
+    renderLinkedAccounts();
+    if (authUser) { var el = document.getElementById('auth-user-email-label'); if (el) el.textContent = authUser.email || ''; }
+  });
+}
+
 
 function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function setEl(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
@@ -26,7 +334,7 @@ function showPage(pageId) {
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
     const page = item.getAttribute('data-page');
-    if (!isOnPlatform && page !== 'settings' && page !== 'help') {
+    if (!isOnPlatform && page !== 'settings' && page !== 'help' && page !== 'fans' && page !== 'analytics') {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById('page-offplatform').classList.add('active');
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -66,8 +374,7 @@ function initPlatformDetection() {
 
 function loadLiveData() {
   if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.local.get(['apexLiveData', 'apexSettings'], result => {
-      if (result.apexSettings) { settings = { ...settings, ...result.apexSettings }; applySettings(); }
+    chrome.storage.local.get(['apexLiveData'], result => {
       if (result.apexLiveData) { liveData = result.apexLiveData; renderLive(); }
     });
     chrome.storage.onChanged.addListener(changes => {
@@ -186,7 +493,39 @@ function renderAnalytics() {
 }
 
 function renderFans() {
-  if (!liveData) return;
+  // ── Offline: render 30-day history when no live session active ─────────────
+  if (!liveData) {
+    const rowsEl = document.getElementById('fans-rows');
+    const histEntries = Object.entries(thirtyDayHistory).filter(([, d]) => d.total > 0).sort(([,a],[,b]) => b.total - a.total);
+    const subEl = document.querySelector('#page-fans .fans-subtitle');
+    if (subEl) subEl.textContent = '30-day history (offline)';
+    if (!histEntries.length) {
+      rowsEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💜</div><div class="empty-state-text">No fan history yet — start streaming to begin tracking</div></div>';
+      return;
+    }
+    const totalHist = histEntries.reduce((s,[,d])=>s+d.total, 0);
+    setEl('fans-total', totalHist + ' tk');
+    rowsEl.innerHTML = histEntries.map(([username, d], i) => {
+      const rank = i+1;
+      const rankClass = rank===1?'gold-rank':rank===2?'silver-rank':rank===3?'bronze-rank':'';
+      const init = username ? username[0].toUpperCase() : '?';
+      const isWhale = d.total >= 200;
+      return '<div class="fan-row offline">' +
+        '<div><span class="rank-num ' + rankClass + '">' + rank + '</span></div>' +
+        '<div class="fan-identity">' +
+          '<div class="fan-avatar tier-' + (isWhale?1:4) + '">' + escHtml(init) + '<div class="fan-presence-dot offline"></div></div>' +
+          '<div class="fan-info"><div class="fan-name">' + escHtml(username) + '</div>' +
+          '<div class="fan-badges"><span class="badge badge-new">30-day history</span>' + (isWhale?'<span class="badge badge-whale">🐋 Whale</span>':'') + '</div></div>' +
+        '</div>' +
+        '<div class="fan-tip-amt ' + (isWhale?'top':'mid') + '">' + d.total + ' tk</div>' +
+        '<div><span class="cnt-val in">—</span></div>' +
+        '<div><span class="cnt-val out">—</span></div>' +
+      '</div>';
+    }).join('');
+    return;
+  }
+  // ── Live: original filter logic ────────────────────────────────────────────
+  if (document.querySelector('#page-fans .fans-subtitle')) document.querySelector('#page-fans .fans-subtitle').textContent = 'Ranked by session tips';
   const { fans=[], totalTips=0 } = liveData;
   setEl('fans-total',`$${totalTips}`);
   let filtered = fans.filter(f=>f.tips>0);
@@ -220,6 +559,35 @@ function renderFans() {
   }).join('');
 }
 
+function updateOfflineAccountDisplay() {
+  var infoEl = document.getElementById('offline-account-info');
+  var histCount = Object.keys(thirtyDayHistory).filter(function(u){ return thirtyDayHistory[u].total > 0; }).length;
+  if (infoEl) {
+    if (storageUsername) {
+      infoEl.innerHTML = '<div class="offline-acct-name">@' + escHtml(storageUsername) + '</div>' +
+        '<div class="offline-acct-sub">' + histCount + ' fan' + (histCount===1?'':'s') + ' in 30-day history</div>';
+    } else {
+      infoEl.innerHTML = '<div class="offline-acct-sub">No account data yet — open your stream and Apex Revenue will begin tracking automatically.</div>';
+    }
+  }
+  var previewEl = document.getElementById('offline-fans-preview');
+  if (previewEl) {
+    var top5 = Object.entries(thirtyDayHistory).filter(function(e){ return e[1].total>0; }).sort(function(a,b){ return b[1].total-a[1].total; }).slice(0,5);
+    if (top5.length === 0) {
+      previewEl.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center">No fan history yet</div>';
+    } else {
+      previewEl.innerHTML = top5.map(function(e,i){
+        var u=e[0], d=e[1];
+        return '<div class="offline-fan-row">' +
+          '<span class="offline-fan-rank">' + (i+1) + '</span>' +
+          '<span class="offline-fan-name">' + escHtml(u) + '</span>' +
+          '<span class="offline-fan-tips">' + d.total + ' tk</span>' +
+          '</div>';
+      }).join('');
+    }
+  }
+}
+
 function applySettings() {
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el[typeof val==='boolean'?'checked':'value']=val;};
   set('setting-auto-open',settings.autoOpen); set('setting-opacity',settings.opacity);
@@ -229,7 +597,10 @@ function applySettings() {
 }
 
 function saveSettings() {
-  if (typeof chrome!=='undefined'&&chrome.storage) chrome.storage.local.set({apexSettings:settings});
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+    var _sk = getPopupSettingsKey(); var _obj = {}; _obj[_sk] = settings;
+    chrome.storage.local.set(_obj);
+  }
 }
 
 function initSettings() {
@@ -239,12 +610,32 @@ function initSettings() {
   document.getElementById('setting-prompts').addEventListener('change',e=>{settings.prompts=e.target.checked;saveSettings();});
   document.getElementById('setting-whale-threshold').addEventListener('input',e=>{settings.whaleThreshold=+e.target.value;setEl('whale-threshold-val','$'+settings.whaleThreshold);saveSettings();if(liveData)renderLive();});
   document.getElementById('setting-ai-price').addEventListener('change',e=>{settings.aiPrice=e.target.checked;saveSettings();});
+  var manageBtn = document.getElementById('settings-manage-accounts');
+  if (manageBtn) {
+    manageBtn.addEventListener('click', function() {
+      showAuthGate('auth-step-3');
+      renderLinkedAccounts();
+      if (authUser) { var el = document.getElementById('auth-user-email-label'); if (el) el.textContent = authUser.email || ''; }
+    });
+  }
+
   document.getElementById('settings-reset').addEventListener('click',()=>{
     if(typeof chrome!=='undefined'&&chrome.storage){chrome.storage.local.remove(['apexLiveData'],()=>{liveData=null;const btn=document.getElementById('settings-reset');btn.textContent='✓ Session data cleared';btn.style.color='var(--green)';setTimeout(()=>{btn.textContent='Reset session data';btn.style.color='';},2500);});}
   });
 }
 
 document.getElementById('alert-cta').addEventListener('click',function(){this.textContent='✓ Done';this.classList.add('done');setTimeout(()=>{this.textContent='Act Now';this.classList.remove('done');},2500);});
+
+// Offline "View Full Fan Leaderboard" button — navigates to fans page with 30d history
+var offlineFansBtn = document.getElementById('offline-view-fans-btn');
+if (offlineFansBtn) {
+  offlineFansBtn.addEventListener('click', function() {
+    showPage('fans');
+    document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+    var fansNav = document.querySelector('.nav-item[data-page="fans"]');
+    if (fansNav) fansNav.classList.add('active');
+  });
+}
 
 document.querySelectorAll('.fan-chip[data-filter]').forEach(chip=>{
   chip.addEventListener('click',()=>{document.querySelectorAll('.fan-chip[data-filter]').forEach(c=>c.classList.remove('active'));chip.classList.add('active');currentFilter=chip.getAttribute('data-filter');renderFans();});
@@ -268,4 +659,69 @@ document.getElementById('featureSubmit').addEventListener('click',async function
   }catch(e){this.textContent='Submit Idea';this.disabled=false;document.getElementById('featureError').style.display='flex';setTimeout(()=>{document.getElementById('featureError').style.display='none';},4000);}
 });
 
-document.addEventListener('DOMContentLoaded',()=>{initSettings();initPlatformDetection();});
+document.addEventListener('DOMContentLoaded', function() {
+  initSettings();
+  initAuthGate();
+
+  if (typeof chrome === 'undefined' || !chrome.storage) {
+    // Dev preview without extension context
+    initPlatformDetection();
+    return;
+  }
+
+  // ── Auth boot sequence ─────────────────────────────────────────────────────
+  chrome.storage.local.get(['apexCurrentUser', 'apexLinkedAccounts'], function(bootResult) {
+    storageUsername = bootResult.apexCurrentUser || '';
+    linkedAccounts  = bootResult.apexLinkedAccounts || [];
+
+    chrome.storage.local.get([getPopupHistoryKey(), getPopupSettingsKey()], function(r) {
+      thirtyDayHistory = r[getPopupHistoryKey()] || {};
+      if (r[getPopupSettingsKey()]) { settings = Object.assign({}, settings, r[getPopupSettingsKey()]); applySettings(); }
+      updateOfflineAccountDisplay();
+
+      // Verify session with Supabase
+      apexVerifyAuth().then(function(user) {
+        if (!user) {
+          showAuthGate('auth-step-1');
+          return;
+        }
+        authUser = user;
+        var emailLabel = document.getElementById('auth-user-email-label');
+        if (emailLabel) emailLabel.textContent = user.email || '';
+
+        apexGetLinkedAccounts().then(function(accounts) {
+          linkedAccounts = accounts;
+          chrome.storage.local.set({ apexLinkedAccounts: accounts });
+
+          if (accounts.length === 0) {
+            showAuthGate('auth-step-2');
+            return;
+          }
+
+          checkAccountMatch(function(match, detectedUser) {
+            if (!match && detectedUser) {
+              var msg = document.getElementById('auth-mismatch-msg');
+              if (msg) msg.textContent = 'The stream page you opened (@' + detectedUser + ') is not linked to this account. Add it in account settings or sign in with the correct account.';
+              showAuthGate('auth-step-mismatch');
+            } else {
+              hideAuthGate();
+              unlockApp();
+              startCloudSyncInterval();
+            }
+          });
+        }).catch(function() {
+          // Offline — use cached accounts
+          if (linkedAccounts.length > 0) {
+            hideAuthGate();
+            unlockApp();
+          } else {
+            showAuthGate('auth-step-2');
+          }
+        });
+
+      }).catch(function() {
+        showAuthGate('auth-step-1');
+      });
+    });
+  });
+});
