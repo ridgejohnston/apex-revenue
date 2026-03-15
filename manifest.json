@@ -5,7 +5,9 @@
   "description": "Creator intelligence engine for cam performers. Real-time monetization prompts, whale tracking, fan leaderboards, and session replay analytics.",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "https://chaturbate.com/*",
@@ -16,6 +18,7 @@
     "https://*.myfreecams.com/*",
     "https://xtease.com/*",
     "https://*.xtease.com/*",
+    "http://localhost/*",
     "https://api.emailjs.com/*",
     "https://us.i.posthog.com/*",
     "https://*.posthog.com/*",
@@ -23,7 +26,7 @@
     "https://*.supabase.co/*"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.emailjs.com https://us.i.posthog.com https://us-assets.i.posthog.com https://*.posthog.com https://*.supabase.co"
+    "extension_pages": "script-src 'self'; connect-src https://us.i.posthog.com https://us-assets.i.posthog.com https://*.supabase.co;"
   },
   "action": {
     "default_popup": "popup.html",
@@ -70,20 +73,16 @@
         "overlay.html",
         "overlay.js",
         "overlay.css",
+        "auth.js",
         "popup.css",
-        "posthog.js",
-        "posthog-init.js",
-        "ph-recorder.js",
+        "array.full.no-external.js",
+        "posthog-recorder.js",
         "icons/*"
       ],
       "matches": [
-        "https://chaturbate.com/*",
         "https://*.chaturbate.com/*",
-        "https://stripchat.com/*",
         "https://*.stripchat.com/*",
-        "https://myfreecams.com/*",
         "https://*.myfreecams.com/*",
-        "https://xtease.com/*",
         "https://*.xtease.com/*"
       ]
     }

@@ -34,47 +34,50 @@
   function patchRecorderLoader() {
     var ext = window.__PosthogExtensions__;
     if (!ext) {
-      // PostHog may not have set this up yet — retry shortly
       setTimeout(patchRecorderLoader, 50);
       return;
     }
 
+    // Patch loadExternalDependency – serve recorder locally, block everything else
     var _origLoader = ext.loadExternalDependency;
-
     ext.loadExternalDependency = function (instance, dependencyName, callback) {
-      // Intercept the recorder (rrweb) dependency requests
-      if (dependencyName === 'recorder' || dependencyName === 'recorder-v2') {
-        // Already loaded by a previous call?
+      if (dependencyName === 'recorder' || dependencyName === 'recorder-v2' || dependencyName === 'posthog-recorder') {
         if (ext.rrweb && ext.rrweb.record) {
           callback(null);
           return;
         }
-
         var recorderUrl;
         try {
           recorderUrl = chrome.runtime.getURL('ph-recorder.js');
         } catch (e) {
-          // Fallback: relative path (works in extension page context)
           recorderUrl = 'ph-recorder.js';
         }
-
         var script = document.createElement('script');
         script.src = recorderUrl;
-        script.onload = function () {
-          callback(null);
-        };
+        script.onload = function () { callback(null); };
         script.onerror = function (err) {
           console.error('[Apex PostHog] Failed to load ph-recorder.js', err);
           callback(err);
         };
         (document.head || document.documentElement).appendChild(script);
       } else {
-        // All other dependencies (toolbar, surveys, etc.) use the default loader
-        if (typeof _origLoader === 'function') {
-          _origLoader.call(ext, instance, dependencyName, callback);
-        }
+        // Block all other CDN dependencies (dead-clicks, surveys, toolbar, etc.)
+        console.log('[Apex PostHog] Blocked external dependency:', dependencyName);
+        return;
       }
     };
+
+    // Patch loadScript to block config.js and any other CDN script requests
+    if (typeof ext.loadScript === 'function') {
+      var _origLoadScript = ext.loadScript;
+      ext.loadScript = function (url, cb) {
+        if (url && url.includes('us-assets.i.posthog.com')) {
+          console.log('[Apex PostHog] Blocked CDN script:', url);
+          return;
+        }
+        return _origLoadScript.call(ext, url, cb);
+      };
+    }
 
     console.log('[Apex PostHog] Recorder loader patched — using bundled ph-recorder.js');
   }

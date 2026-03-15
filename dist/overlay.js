@@ -40,11 +40,37 @@ document.querySelectorAll('.nav-item').forEach(function(item) {
 function renderPage(page) {
   var c = document.getElementById('overlay-content');
   if (!c) return;
-  if (page === 'live')      c.innerHTML = getLivePage();
+  if (page === 'live') {
+    c.innerHTML = getLivePage();
+    initLiveCTA();
+  }
   else if (page === 'fans') c.innerHTML = getFansPage();
   else if (page === 'help') c.innerHTML = getHelpPage();
   else if (page === 'analytics') c.innerHTML = getAnalyticsPage();
   else if (page === 'settings') { c.innerHTML = getSettingsPage(); initSettings(); }
+}
+
+function initLiveCTA() {
+  var ctaBtn = document.querySelector('.alert-cta');
+  if (!ctaBtn) return;
+  ctaBtn.addEventListener('click', function() {
+    var promptCards = document.getElementById('prompt-cards');
+    if (!promptCards) return;
+
+    // Scroll the top prompt into view smoothly
+    promptCards.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Pulse the top card with a purple glow
+    var topCard = promptCards.querySelector('.prompt-card');
+    if (!topCard) return;
+    topCard.style.transition = 'box-shadow 0.15s ease, transform 0.15s ease';
+    topCard.style.boxShadow = '0 0 0 2px #a855f7, 0 0 18px rgba(168,85,247,0.45)';
+    topCard.style.transform = 'scale(1.025)';
+    setTimeout(function() {
+      topCard.style.boxShadow = '';
+      topCard.style.transform = '';
+    }, 1400);
+  });
 }
 
 function getPlaceholder(icon, label, sub) {
@@ -54,7 +80,7 @@ function getPlaceholder(icon, label, sub) {
 function getLivePage() { return `
 <div class="alert-banner" id="alert-banner"><div class="alert-icon">🔥</div><div><div class="alert-label">High Tip Moment</div><div class="alert-text">3 whales in chat — launch a goal now</div></div><button class="alert-cta">Act Now</button></div>
 <div class="stats-row">
-  <div class="stat-card tips"><div class="stat-label">Tokens</div><div class="stat-value">$342<span>/hr</span></div><div class="stat-change">↑ 28%</div></div>
+  <div class="stat-card tips"><div class="stat-label">Earnings</div><div class="stat-value">$0<span>/hr</span></div><div class="stat-change"></div></div>
   <div class="stat-card viewers"><div class="stat-label">Viewers</div><div class="stat-value">1.2<span>k</span></div><div class="stat-change">↑ peak</div></div>
   <div class="stat-card conv"><div class="stat-label">Conv.</div><div class="stat-value">4.7<span>%</span></div><div class="stat-change">↑ 1.2%</div></div>
 </div>
@@ -207,6 +233,12 @@ document.querySelectorAll('.nav-item').forEach(function(item) {
   });
 });
 
+// ── Token → USD conversion (Chaturbate streamer rate: 1 tk = $0.05) ────────────
+function tkUsd(tokens) {
+  var usd = (tokens || 0) * 0.05;
+  return '$' + (usd >= 10 ? Math.round(usd) : usd.toFixed(2));
+}
+
 window.addEventListener('message', function(e) {
   // popout.js forwards content.js messages with source rewritten to 'apex-popout'
   if (!e.data || e.data.source !== 'apex-popout') return;
@@ -215,24 +247,11 @@ window.addEventListener('message', function(e) {
   }
 });
 
-// Load 30d history + live data together so history is ready before first render
-// Boot order: (1) verify Supabase auth → (2) resolve username → (3) check PIN → (4) load data
+// Boot order: (1) verify Supabase auth → (2) resolve username → (3) load data
 if (typeof chrome !== 'undefined' && chrome.storage) {
   chrome.storage.local.get(['apexCurrentUser'], function(boot) {
     storageUsername = boot.apexCurrentUser || '';
-    // Step 1: verify the user is authenticated (via stored session)
-    verifyOverlayAuth(function() {
-      // Step 2: check PIN
-      var pinKey = getPinKey();
-      chrome.storage.local.get([pinKey], function(pinResult) {
-        var storedHash = pinResult[pinKey] || null;
-        if (storedHash) {
-          showPinLock(storedHash, loadApexData);
-        } else {
-          loadApexData();
-        }
-      });
-    });
+    verifyOverlayAuth(loadApexData);
   });
 }
 
@@ -246,7 +265,7 @@ function applyLiveData(data) {
 
   // ── Stats row ───────────────────────────────────────────────────────────────
   var tipsEl = document.querySelector('.stat-card.tips .stat-value');
-  if (tipsEl) tipsEl.innerHTML = '$' + (data.tokensPerHour || 0) + '<span>/hr</span>';
+  if (tipsEl) tipsEl.innerHTML = tkUsd(data.tokensPerHour) + '<span>/hr</span>';
 
   var viewEl = document.querySelector('.stat-card.viewers .stat-value');
   if (viewEl) {
@@ -285,7 +304,7 @@ function applyLiveData(data) {
     whaleTable.innerHTML = theadHTML + rowsHTML;
 
     var footer = document.querySelector('.whale-footer .wftv');
-    if (footer) footer.textContent = '$' + (data.totalTips || 0);
+    if (footer) footer.textContent = tkUsd(data.totalTips);
 
     var lnk = document.querySelector('.section-lnk');
     if (lnk) lnk.textContent = (data.whales ? data.whales.length : 0) + ' active';
@@ -408,7 +427,7 @@ function updatePrompts(data) {
     alertCTA = 'Set Goal';
   } else if (tph > 200) {
     alertIcon = '📈'; alertLabel = 'High Earnings';
-    alertText = 'Earning ' + tph + ' tk/hr — sustain with a countdown goal';
+    alertText = 'Earning ' + tkUsd(tph) + '/hr — sustain with a countdown goal';
     alertCTA = 'Set Goal';
   } else if (lurkers > viewers * 0.85 && viewers > 10) {
     alertIcon = '👁️'; alertLabel = 'Lurker Heavy';
@@ -592,7 +611,7 @@ function updateHeatMap(data) {
   } else if (tph > 150) {
     peakLabel = '🔥 Hot session';
   } else {
-    peakLabel = '📊 $' + totalTips + ' session';
+    peakLabel = '📊 ' + tkUsd(totalTips) + ' session';
   }
   if (peakEl) peakEl.textContent = peakLabel;
 
@@ -744,7 +763,7 @@ function getAnalyticsPage() {
   <div class="an-card c2"><div class="an-card-lbl">Current Viewers</div><div class="an-card-val" id="an-viewers">0</div><div class="an-card-sub" id="an-viewers-sub">in room right now</div></div>
   <div class="an-card c3"><div class="an-card-lbl">Conversion</div><div class="an-card-val" id="an-conv">0<span>%</span></div><div class="an-card-sub" id="an-conv-sub">viewers who tipped</div></div>
   <div class="an-card c4"><div class="an-card-lbl">Avg Tip</div><div class="an-card-val" id="an-avg">—<span></span></div><div class="an-card-sub" id="an-avg-sub">per transaction</div></div>
-  <div class="an-card c5"><div class="an-card-lbl">Tip Rate</div><div class="an-card-val" id="an-tph">0<span>/hr</span></div><div class="an-card-sub" id="an-tph-sub">tokens per hour</div></div>
+  <div class="an-card c5"><div class="an-card-lbl">Earnings</div><div class="an-card-val" id="an-tph">$0<span>/hr</span></div><div class="an-card-sub" id="an-tph-sub">at $0.05/tk</div></div>
   <div class="an-card c6"><div class="an-card-lbl">Tippers</div><div class="an-card-val" id="an-tippers">0</div><div class="an-card-sub" id="an-tippers-sub">unique this session</div></div>
 </div>
 <div class="an-divider"></div>
@@ -810,7 +829,7 @@ function updateAnalytics(data) {
   set('an-viewers',       viewers);
   set('an-conv',          convRate);
   set('an-avg',           avgTip > 0 ? avgTip : '—');
-  set('an-tph',           tph);
+  set('an-tph',           tkUsd(tph));
   set('an-tippers',       tippers.length);
   set('an-viewers-sub',   viewers === 1 ? '1 person in room right now' : viewers + ' people in room right now');
   set('an-conv-sub',      tippers.length + ' of ' + viewers + ' tipped');
@@ -853,41 +872,525 @@ var thirtyDayHistory = {}; // { username: totalTips30d } — persisted in storag
 var storageUsername = ''; // current broadcaster — used to namespace storage keys
 function getHistoryKey()  { return storageUsername ? 'apex_' + storageUsername + '_30dHistory' : 'apex30dHistory'; }
 function getSettingsKey() { return storageUsername ? 'apex_' + storageUsername + '_settings'   : 'apexSettings'; }
-function getPinKey()      { return storageUsername ? 'apex_' + storageUsername + '_pin'       : 'apex_pin'; }
 
-// ── Auth check helpers for overlay ───────────────────────────────────────────
-// The overlay trusts the session presence from chrome.storage (set by the popup).
-// It does NOT re-call Supabase itself — keeping the overlay lightweight.
+// ── Overlay Auth UI ────────────────────────────────────────────────────────────
+// Full sign-in / sign-up / link-account flow rendered directly in the overlay.
 
-function showOverlayAuthWall(message) {
-  document.body.innerHTML =
-    '<div style="position:fixed;inset:0;background:#0f0f13;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:Manrope,sans-serif;padding:24px;">' +
-      '<div style="font-size:32px;">🔒</div>' +
-      '<div style="font-size:16px;font-weight:700;color:#e5e7eb;text-align:center;">Apex Revenue</div>' +
-      '<div style="font-size:13px;color:#9ca3af;text-align:center;max-width:260px;line-height:1.6;">' + message + '</div>' +
-      '<div style="font-size:11px;color:#6b7280;text-align:center;margin-top:8px;">Open the Apex Revenue extension popup to sign in.</div>' +
-    '</div>';
+function injectOverlayAuthStyles() {
+  if (document.getElementById('apex-auth-styles')) return;
+  var s = document.createElement('style');
+  s.id = 'apex-auth-styles';
+  s.textContent =
+    '.oa-wrap{position:fixed;inset:0;background:#0f0f13;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;font-family:Manrope,sans-serif;overflow-y:auto}'
+  + '.oa-logo{display:flex;justify-content:center;margin-bottom:4px}'
+  + '.oa-logo img{width:260px;height:auto;object-fit:contain}'
+  + '.oa-brand{font-family:Syne,sans-serif;font-weight:800;font-size:17px;color:#e5e7eb;letter-spacing:.5px;margin-bottom:3px;text-align:center}'
+  + '.oa-tagline{font-size:11px;color:#6b7280;margin-bottom:20px;text-align:center}'
+  + '.oa-card{background:#1a1a24;border:1px solid #2a2a38;border-radius:16px;padding:22px;width:100%;max-width:290px}'
+  + '.oa-tabs{display:flex;margin-bottom:18px;background:#0f0f13;border-radius:8px;padding:3px}'
+  + '.oa-tab{flex:1;padding:8px 4px;text-align:center;font-size:12px;font-weight:600;color:#6b7280;cursor:pointer;border-radius:6px;transition:all .2s;user-select:none}'
+  + '.oa-tab.active{background:#7c5cfc;color:#fff}'
+  + '.oa-label{font-size:11px;color:#9ca3af;margin-bottom:5px;font-weight:500}'
+  + '.oa-input{width:100%;background:#0f0f13;border:1px solid #2a2a38;border-radius:8px;padding:10px 12px;color:#e5e7eb;font-size:13px;font-family:Manrope,sans-serif;box-sizing:border-box;outline:none;margin-bottom:10px}'
+  + '.oa-input:focus{border-color:#7c5cfc}'
+  + '.oa-btn{width:100%;background:#7c5cfc;border:none;border-radius:8px;padding:11px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:Manrope,sans-serif;margin-top:4px;transition:background .2s}'
+  + '.oa-btn:hover:not(:disabled){background:#9a7aff}'
+  + '.oa-btn:disabled{background:#3a3a50;color:#6b7280;cursor:not-allowed}'
+  + '.oa-btn.sec{background:transparent;border:1px solid #2a2a38;color:#9ca3af;margin-top:8px}'
+  + '.oa-btn.sec:hover:not(:disabled){background:#1e1e2a;color:#e5e7eb;border-color:#3a3a50}'
+  + '.oa-err{font-size:11px;color:#ef4444;text-align:center;min-height:16px;margin-bottom:8px;line-height:1.4}'
+  + '.oa-ok{font-size:11px;color:#10b981;text-align:center;min-height:16px;margin-bottom:8px}'
+  + '.oa-sec-lbl{font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}'
+  + '.oa-plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}'
+  + '.oa-plat{padding:9px 6px;background:#0f0f13;border:1px solid #2a2a38;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;color:#9ca3af;transition:all .2s;user-select:none;line-height:1.4}'
+  + '.oa-plat.sel{border-color:#7c5cfc;color:#c4b5fd;background:#1a1030}'
+  + '.oa-match-box{background:#1a1030;border:1px solid rgba(124,92,252,.3);border-radius:10px;padding:14px;margin-bottom:14px;text-align:center}'
+  + '.oa-match-user{font-size:15px;font-weight:700;color:#c4b5fd;margin-bottom:3px}'
+  + '.oa-match-sub{font-size:11px;color:#6b7280}'
+  + '.oa-hint{font-size:11px;color:#6b7280;text-align:center;margin-bottom:14px;line-height:1.5;padding:0 4px}'
+  + '.oa-code-box{display:flex;align-items:center;gap:10px;background:#0f0f13;border:1px solid #7c5cfc;border-radius:10px;padding:12px 14px;margin:10px 0 4px}'
+  + '.oa-code-txt{flex:1;font-family:"DM Mono",monospace;font-size:18px;font-weight:600;color:#c4b5fd;letter-spacing:2px;user-select:all}'
+  + '.oa-copy-btn{background:transparent;border:1px solid #3a3a50;border-radius:6px;color:#9ca3af;font-size:11px;font-weight:600;padding:6px 10px;cursor:pointer;font-family:Manrope,sans-serif;transition:all .2s;white-space:nowrap}'
+  + '.oa-copy-btn:hover{background:#1e1e2a;color:#e5e7eb;border-color:#4a4a60}'
+  + '.oa-step-hint{font-size:11px;color:#6b7280;line-height:1.5;margin-bottom:14px;padding:10px 12px;background:#0f0f13;border-radius:8px;border:1px solid #2a2a38}'
+  + '.oa-step-hint strong{color:#c4b5fd}'
+  + '.oa-admin-link{text-align:center;margin-top:14px}'
+  + '.oa-admin-link a{font-size:10px;color:#3a3a50;text-decoration:none;cursor:pointer;font-weight:600;letter-spacing:.3px;transition:color .2s}'
+  + '.oa-admin-link a:hover{color:#7c5cfc}'
+  + '.oa-admin-mode{display:flex;align-items:center;justify-content:center;gap:6px;background:#1a1030;border:1px solid rgba(124,92,252,.3);border-radius:8px;padding:7px 12px;margin-bottom:14px;font-size:11px;color:#c4b5fd;font-weight:600}'
+  + '.oa-admin-mode-dot{width:6px;height:6px;border-radius:50%;background:#7c5cfc;flex-shrink:0}';
+  document.head.appendChild(s);
 }
 
-function verifyOverlayAuth(onVerified) {
-  chrome.storage.local.get(['apexSession', 'apexLinkedAccounts', 'apexCurrentUser'], function(r) {
-    // No session — user needs to log in via popup
-    if (!r.apexSession || !r.apexSession.access_token) {
-      showOverlayAuthWall('Sign in to your Apex Revenue account to access the overlay.');
+function removeOverlayAuthWrap() {
+  var el = document.getElementById('apex-auth-wrap');
+  if (el) el.remove();
+}
+
+function apexLogoHTML() {
+  return '<div class="oa-logo"><img src="' + chrome.runtime.getURL('icons/apex-logo.png') + '" alt="Apex Revenue"></div>';
+}
+
+// Called after a successful sign-in to route to the correct next step
+function overlayAuthProceed(onVerified) {
+  chrome.storage.local.get(['apexLinkedAccounts', 'apexCurrentUser', 'apexIsAdmin'], function(r) {
+    // ── Admin bypass ────────────────────────────────────────────────────────
+    if (r.apexIsAdmin === true) {
+      removeOverlayAuthWrap();
+      showAdminBadge();
+      onVerified();
       return;
     }
     var linked = r.apexLinkedAccounts || [];
     var detectedUser = r.apexCurrentUser || storageUsername || '';
-    // If there are linked accounts but none match the current streamer, show mismatch
+    if (linked.length === 0) {
+      showOverlayLinkStep(null, onVerified);
+      return;
+    }
+    if (detectedUser) {
+      var dn = detectedUser.toLowerCase();
+      var matched = linked.some(function(a) { return a.username === dn; });
+      if (!matched) {
+        showOverlayMismatchScreen(detectedUser, onVerified);
+        return;
+      }
+    }
+    removeOverlayAuthWrap();
+    onVerified();
+  });
+}
+
+// ── Step 1: Sign In / Create Account ─────────────────────────────────────────
+function showOverlayLoginForm(hint, onVerified) {
+  injectOverlayAuthStyles();
+  removeOverlayAuthWrap();
+  var wrap = document.createElement('div');
+  wrap.id = 'apex-auth-wrap';
+  wrap.className = 'oa-wrap';
+  wrap.innerHTML =
+    apexLogoHTML() +
+    '<div class="oa-tagline">Creator Intelligence Engine</div>' +
+    '<div class="oa-card">' +
+      '<div id="oa-admin-mode-banner" style="display:none" class="oa-admin-mode">' +
+        '<div class="oa-admin-mode-dot"></div>Admin Login' +
+      '</div>' +
+      '<div class="oa-tabs">' +
+        '<div class="oa-tab active" id="oa-tab-in">Sign In</div>' +
+        '<div class="oa-tab" id="oa-tab-up">Create Account</div>' +
+      '</div>' +
+      (hint ? '<div class="oa-hint">' + hint + '</div>' : '') +
+      '<div class="oa-label">Email</div>' +
+      '<input class="oa-input" id="oa-email" type="email" placeholder="your@email.com" autocomplete="email">' +
+      '<div class="oa-label">Password</div>' +
+      '<input class="oa-input" id="oa-pass" type="password" placeholder="Min 6 characters" autocomplete="current-password">' +
+      '<div class="oa-err" id="oa-err"></div>' +
+      '<button class="oa-btn" id="oa-submit">Sign In</button>' +
+      '<div id="oa-forgot-wrap" style="display:block;text-align:center;margin-top:10px">' +
+        '<a id="oa-forgot-link" href="#" style="font-size:11px;color:#6b7280;text-decoration:none;font-weight:500;transition:color .2s">Forgot password?</a>' +
+      '</div>' +
+    '</div>' +
+    '<div class="oa-admin-link"><a id="oa-admin-link" href="#">Admin Login</a></div>';
+  document.body.appendChild(wrap);
+
+  var tabIn       = document.getElementById('oa-tab-in');
+  var tabUp       = document.getElementById('oa-tab-up');
+  var submit      = document.getElementById('oa-submit');
+  var errEl       = document.getElementById('oa-err');
+  var emailEl     = document.getElementById('oa-email');
+  var passEl      = document.getElementById('oa-pass');
+  var adminLink   = document.getElementById('oa-admin-link');
+  var adminBanner = document.getElementById('oa-admin-mode-banner');
+  var forgotWrap  = document.getElementById('oa-forgot-wrap');
+  var forgotLink  = document.getElementById('oa-forgot-link');
+  var mode = 'signin';
+  var adminMode = false;
+
+  // Toggle admin mode on link click
+  adminLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    adminMode = !adminMode;
+    adminBanner.style.display = adminMode ? 'flex' : 'none';
+    adminLink.textContent = adminMode ? 'Cancel Admin Login' : 'Admin Login';
+    // Admin accounts already exist — lock to Sign In tab
+    if (adminMode) { tabIn.click(); tabUp.style.display = 'none'; }
+    else           { tabUp.style.display = ''; }
+    errEl.textContent = '';
+  });
+
+  // Forgot password — sends a Supabase reset email
+  forgotLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    var email = emailEl.value.trim();
+    if (!email) {
+      errEl.textContent = 'Enter your email above first.';
+      return;
+    }
+    forgotLink.textContent = 'Sending…';
+    forgotLink.style.pointerEvents = 'none';
+    apexFetch('/auth/v1/recover', {
+      method: 'POST',
+      body: JSON.stringify({ email: email })
+    }).then(function() {
+      errEl.style.color = '#10b981';
+      errEl.textContent = 'Reset link sent — check your email.';
+      forgotLink.textContent = 'Forgot password?';
+      forgotLink.style.pointerEvents = '';
+    }).catch(function(err) {
+      console.error('[ApexRevenue] recover error:', err);
+      errEl.style.color = '#ef4444';
+      errEl.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+      forgotLink.textContent = 'Forgot password?';
+      forgotLink.style.pointerEvents = '';
+    });
+  });
+
+  tabIn.addEventListener('click', function() {
+    mode = 'signin'; tabIn.classList.add('active'); tabUp.classList.remove('active');
+    submit.textContent = 'Sign In'; errEl.textContent = '';
+    passEl.setAttribute('autocomplete', 'current-password');
+    forgotWrap.style.display = 'block';
+  });
+  tabUp.addEventListener('click', function() {
+    mode = 'signup'; tabUp.classList.add('active'); tabIn.classList.remove('active');
+    submit.textContent = 'Create Account'; errEl.textContent = '';
+    passEl.setAttribute('autocomplete', 'new-password');
+    forgotWrap.style.display = 'none';
+  });
+
+  function setLoading(on) {
+    submit.disabled = on;
+    if (on) {
+      submit.textContent = adminMode ? 'Verifying admin…' : (mode === 'signin' ? 'Signing in…' : 'Creating account…');
+    } else {
+      submit.textContent = adminMode ? 'Sign In as Admin' : (mode === 'signin' ? 'Sign In' : 'Create Account');
+    }
+  }
+
+  function handleSubmit() {
+    var email = emailEl.value.trim();
+    var pass  = passEl.value;
+    errEl.textContent = '';
+    if (!email || !pass) { errEl.textContent = 'Please enter your email and password.'; return; }
+    if (pass.length < 6)  { errEl.textContent = 'Password must be at least 6 characters.'; return; }
+    setLoading(true);
+
+    if (adminMode) {
+      // Admin path: sign in then explicitly await admin status check before proceeding
+      apexSignIn(email, pass).then(function(data) {
+        var token = (data && data.access_token) || (data && data.session && data.session.access_token);
+        if (!token) {
+          errEl.textContent = 'Sign in failed. Check your email and password.';
+          setLoading(false);
+          return;
+        }
+        // Explicitly await admin status — no race condition
+        return apexFetchAdminStatus().then(function(isAdmin) {
+          if (!isAdmin) {
+            errEl.textContent = 'This account does not have admin access.';
+            setLoading(false);
+            return;
+          }
+          removeOverlayAuthWrap();
+          showAdminBadge();
+          onVerified();
+        });
+      }).catch(function(err) {
+        console.error('[ApexAuth] admin login error ->', err);
+        errEl.textContent = err.message || 'Something went wrong. Please try again.';
+        setLoading(false);
+      });
+      return;
+    }
+
+    // Normal path
+    var authPromise = mode === 'signin' ? apexSignIn(email, pass) : apexSignUp(email, pass);
+    authPromise.then(function(data) {
+      // Supabase v2 may nest the token under data.session
+      var token = (data && data.access_token) || (data && data.session && data.session.access_token);
+      if (!token) {
+        // Signup succeeded but email confirmation is required
+        if (mode === 'signup' && data && (data.user || data.id || data.email)) {
+          errEl.style.color = '#10b981';
+          errEl.textContent = 'Account created! Check your email to confirm it, then sign in.';
+          tabIn.click(); // switch to Sign In tab
+          setLoading(false);
+        } else {
+          errEl.textContent = mode === 'signin'
+            ? 'Sign in failed. Check your email and password, or create an account.'
+            : 'Sign up failed. This email may already be registered — try signing in.';
+          setLoading(false);
+        }
+        return;
+      }
+      return apexGetLinkedAccounts().then(function(accounts) {
+        var obj = {}; obj[APEX_LINKED_KEY] = accounts;
+        chrome.storage.local.set(obj, function() { overlayAuthProceed(onVerified); });
+      });
+    }).catch(function(err) {
+      console.error('[ApexAuth] handleSubmit error ->', err);
+      var msg = err.message || 'Something went wrong. Please try again.';
+      errEl.textContent = msg;
+      setLoading(false);
+    });
+  }
+
+  submit.addEventListener('click', handleSubmit);
+  [emailEl, passEl].forEach(function(inp) {
+    inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSubmit(); });
+  });
+}
+
+// ── Step 2: Link your streaming account ──────────────────────────────────────
+function showOverlayLinkStep(hint, onVerified) {
+  injectOverlayAuthStyles();
+  removeOverlayAuthWrap();
+
+  var detectedUser     = storageUsername || '';
+  var selectedPlatform = 'chaturbate';
+  var platforms = [
+    { id: 'chaturbate', label: 'Chaturbate' },
+    { id: 'stripchat',  label: 'Stripchat'  },
+    { id: 'xtease',     label: 'XTease'     },
+    { id: 'myfreecams', label: 'MyFreeCams' },
+  ];
+
+  var wrap = document.createElement('div');
+  wrap.id = 'apex-auth-wrap';
+  wrap.className = 'oa-wrap';
+  document.body.appendChild(wrap);
+
+  // Returns the public profile URL for a given platform + username
+  function profileUrl(platform, username) {
+    var u = encodeURIComponent(username);
+    if (platform === 'chaturbate') return 'https://chaturbate.com/' + u + '/';
+    if (platform === 'stripchat')  return 'https://stripchat.com/' + u;
+    if (platform === 'xtease')     return 'https://xtease.com/' + u;
+    if (platform === 'myfreecams') return 'https://profiles.myfreecams.com/' + u;
+    return 'https://' + platform + '.com/' + u;
+  }
+
+  // ── View 1: Enter platform + username ──────────────────────────────────────
+  function renderEnterView() {
+    var platHTML = platforms.map(function(p) {
+      return '<div class="oa-plat' + (p.id === selectedPlatform ? ' sel' : '') + '" data-plat="' + p.id + '">' + p.label + '</div>';
+    }).join('');
+
+    wrap.innerHTML =
+      apexLogoHTML() +
+      '<div class="oa-tagline">Verify your streaming account</div>' +
+      '<div class="oa-card">' +
+        '<div class="oa-sec-lbl">Your Platform</div>' +
+        '<div class="oa-plat-grid">' + platHTML + '</div>' +
+        '<div class="oa-label">Your streaming username</div>' +
+        '<input class="oa-input" id="oa-uname" type="text" placeholder="e.g. yourname" value="' + detectedUser + '">' +
+        '<div class="oa-err" id="oa-err"></div>' +
+        '<button class="oa-btn" id="oa-next-btn">Get Verification Code</button>' +
+      '</div>';
+
+    wrap.querySelectorAll('.oa-plat').forEach(function(el) {
+      el.addEventListener('click', function() {
+        wrap.querySelectorAll('.oa-plat').forEach(function(x) { x.classList.remove('sel'); });
+        el.classList.add('sel');
+        selectedPlatform = el.getAttribute('data-plat');
+      });
+    });
+
+    var unameEl = document.getElementById('oa-uname');
+    var errEl   = document.getElementById('oa-err');
+    var nextBtn = document.getElementById('oa-next-btn');
+
+    nextBtn.addEventListener('click', function() {
+      var username = (unameEl.value || '').trim().toLowerCase().replace(/^@/, '');
+      errEl.textContent = '';
+      if (!username) { errEl.textContent = 'Please enter your streaming username.'; return; }
+      nextBtn.disabled = true; nextBtn.textContent = 'Generating code…';
+      apexGenerateVerificationCode(selectedPlatform, username).then(function(code) {
+        renderVerifyView(code, username, selectedPlatform);
+      }).catch(function(err) {
+        errEl.textContent = err.message || 'Failed to generate code. Please try again.';
+        nextBtn.disabled = false; nextBtn.textContent = 'Get Verification Code';
+      });
+    });
+
+    unameEl.addEventListener('keydown', function(e) { if (e.key === 'Enter') nextBtn.click(); });
+  }
+
+  // ── View 2: Show code + verify against bio ─────────────────────────────────
+  function renderVerifyView(code, username, platform) {
+    wrap.innerHTML =
+      apexLogoHTML() +
+      '<div class="oa-tagline">Add code to your bio</div>' +
+      '<div class="oa-card">' +
+        '<div class="oa-step-hint">Paste this code into your <strong>' + platform + '</strong> bio for <strong>@' + username + '</strong>, save your profile, then tap Verify.</div>' +
+        '<div class="oa-code-box">' +
+          '<div class="oa-code-txt" id="oa-code-txt">' + code + '</div>' +
+          '<button class="oa-copy-btn" id="oa-copy-btn">Copy</button>' +
+        '</div>' +
+        '<div class="oa-hint" style="margin-top:8px">Expires in 10 minutes. You can remove it from your bio after verifying.</div>' +
+        '<div class="oa-err" id="oa-err"></div>' +
+        '<button class="oa-btn" id="oa-verify-btn">Verify Now</button>' +
+        '<button class="oa-btn sec" id="oa-back-btn">← Back</button>' +
+      '</div>';
+
+    var errEl     = document.getElementById('oa-err');
+    var copyBtn   = document.getElementById('oa-copy-btn');
+    var verifyBtn = document.getElementById('oa-verify-btn');
+    var backBtn   = document.getElementById('oa-back-btn');
+
+    copyBtn.addEventListener('click', function() {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(function() {
+          copyBtn.textContent = 'Copied ✓'; copyBtn.style.color = '#10b981';
+          setTimeout(function() { copyBtn.textContent = 'Copy'; copyBtn.style.color = ''; }, 2000);
+        });
+      } else {
+        // Fallback: select the text so user can copy manually
+        var range = document.createRange();
+        range.selectNode(document.getElementById('oa-code-txt'));
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+      }
+    });
+
+    backBtn.addEventListener('click', renderEnterView);
+
+    verifyBtn.addEventListener('click', function() {
+      errEl.textContent = '';
+      verifyBtn.disabled = true; verifyBtn.textContent = 'Checking your bio…';
+
+      // Step 1: fetch the public profile page and look for the code in the HTML
+      fetch(profileUrl(platform, username), { credentials: 'omit' })
+        .then(function(res) { return res.text(); })
+        .then(function(html) {
+          if (html.indexOf(code) === -1) {
+            errEl.textContent = 'Code not found in your bio. Make sure you saved your profile and try again.';
+            verifyBtn.disabled = false; verifyBtn.textContent = 'Verify Now';
+            return;
+          }
+          // Step 2: validate + consume the code server-side (checks user_id binding + expiry)
+          verifyBtn.textContent = 'Confirming…';
+          return apexConsumeVerificationCode(code, platform, username)
+            .then(function() {
+              return apexLinkPlatformAccount(platform, username);
+            })
+            .then(function(accounts) {
+              var obj = {}; obj[APEX_LINKED_KEY] = accounts;
+              chrome.storage.local.set(obj, function() {
+                removeOverlayAuthWrap();
+                onVerified();
+              });
+            });
+        })
+        .catch(function(err) {
+          errEl.textContent = err.message || 'Verification failed. Please try again.';
+          verifyBtn.disabled = false; verifyBtn.textContent = 'Verify Now';
+        });
+    });
+  }
+
+  renderEnterView();
+}
+
+// ── Mismatch: logged in but stream not linked ─────────────────────────────────
+function showOverlayMismatchScreen(detectedUser, onVerified) {
+  injectOverlayAuthStyles();
+  removeOverlayAuthWrap();
+  var wrap = document.createElement('div');
+  wrap.id = 'apex-auth-wrap';
+  wrap.className = 'oa-wrap';
+  wrap.innerHTML =
+    apexLogoHTML() +
+    '<div class="oa-tagline">Account not linked</div>' +
+    '<div class="oa-card">' +
+      '<div class="oa-match-box">' +
+        '<div class="oa-match-user">@' + detectedUser + '</div>' +
+        '<div class="oa-match-sub">This stream isn\'t linked to your account yet</div>' +
+      '</div>' +
+      '<div class="oa-hint">Add this username to unlock the overlay, or sign in with a different account.</div>' +
+      '<div class="oa-err" id="oa-err"></div>' +
+      '<button class="oa-btn" id="oa-add-btn">Add @' + detectedUser + ' to My Account</button>' +
+      '<button class="oa-btn sec" id="oa-out-btn">Sign Out</button>' +
+    '</div>';
+  document.body.appendChild(wrap);
+
+  var errEl  = document.getElementById('oa-err');
+  var addBtn = document.getElementById('oa-add-btn');
+  var outBtn = document.getElementById('oa-out-btn');
+
+  addBtn.addEventListener('click', function() {
+    errEl.textContent = '';
+    addBtn.disabled = true; addBtn.textContent = 'Adding…';
+    apexLinkPlatformAccount('chaturbate', detectedUser).then(function(accounts) {
+      var obj = {}; obj[APEX_LINKED_KEY] = accounts;
+      chrome.storage.local.set(obj, function() { removeOverlayAuthWrap(); onVerified(); });
+    }).catch(function(err) {
+      errEl.textContent = err.message || 'Failed to add account. Please try again.';
+      addBtn.disabled = false; addBtn.textContent = 'Add @' + detectedUser + ' to My Account';
+    });
+  });
+
+  outBtn.addEventListener('click', function() {
+    outBtn.disabled = true; outBtn.textContent = 'Signing out…';
+    apexSignOut().then(function() { showOverlayLoginForm(null, onVerified); })
+                 .catch(function() { showOverlayLoginForm(null, onVerified); });
+  });
+}
+
+// Fallback for any generic auth error (redirects to login form)
+function showOverlayAuthWall(message) {
+  showOverlayLoginForm(message, loadApexData);
+}
+
+// Shows a small floating badge so you know admin mode is active during dev
+function showAdminBadge() {
+  if (document.getElementById('apex-admin-badge')) return;
+  var badge = document.createElement('div');
+  badge.id = 'apex-admin-badge';
+  badge.textContent = 'ADMIN';
+  badge.style.cssText = [
+    'position:fixed',
+    'bottom:12px',
+    'right:14px',
+    'background:linear-gradient(135deg,#7c5cfc,#a855f7)',
+    'color:#fff',
+    'font-size:9px',
+    'font-weight:800',
+    'letter-spacing:1.5px',
+    'padding:4px 10px',
+    'border-radius:20px',
+    'z-index:2147483647',
+    'font-family:Manrope,sans-serif',
+    'pointer-events:none',
+    'opacity:.75',
+    'box-shadow:0 2px 8px rgba(124,92,252,.4)'
+  ].join(';');
+  document.body.appendChild(badge);
+}
+
+function verifyOverlayAuth(onVerified) {
+  chrome.storage.local.get(['apexSession', 'apexLinkedAccounts', 'apexCurrentUser', 'apexIsAdmin'], function(r) {
+    if (!r.apexSession || !r.apexSession.access_token) {
+      showOverlayLoginForm(null, onVerified);
+      return;
+    }
+    // ── Admin bypass: skip all linking/mismatch checks ──────────────────────
+    if (r.apexIsAdmin === true) {
+      removeOverlayAuthWrap();
+      showAdminBadge();
+      onVerified();
+      return;
+    }
+    var linked = r.apexLinkedAccounts || [];
+    var detectedUser = r.apexCurrentUser || storageUsername || '';
+    if (linked.length === 0) {
+      showOverlayLinkStep(null, onVerified);
+      return;
+    }
     if (linked.length > 0 && detectedUser) {
       var dn = detectedUser.toLowerCase();
       var matched = linked.some(function(a){ return a.username === dn; });
       if (!matched) {
-        showOverlayAuthWall(
-          'This extension is registered to a different account. ' +
-          'The current stream (@' + detectedUser + ') is not linked. ' +
-          'Open the popup to add this account or sign in.'
-        );
+        showOverlayMismatchScreen(detectedUser, onVerified);
         return;
       }
     }
@@ -895,85 +1398,7 @@ function verifyOverlayAuth(onVerified) {
   });
 }
 
-// Hash a PIN string to hex using Web Crypto (available in extension context)
-function hashPin(pin, callback) {
-  var encoded = new TextEncoder().encode(pin);
-  crypto.subtle.digest('SHA-256', encoded).then(function(buf) {
-    var hex = Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-    callback(hex);
-  });
-}
-
-// Show the PIN lock overlay; calls onUnlock() when correct PIN entered
-function showPinLock(storedHash, onUnlock) {
-  var overlay = document.createElement('div');
-  overlay.id = 'pin-lock-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:var(--bg,#0f0f13);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
-  overlay.innerHTML = `
-    <div style="font-size:22px;font-weight:700;color:#e5e7eb;letter-spacing:.3px;">🔐 Apex Revenue</div>
-    <div style="font-size:13px;color:#6b7280;">Enter your PIN to continue</div>
-    <div id="pin-dots" style="display:flex;gap:14px;margin:6px 0;">
-      <div class="pin-dot" style="width:14px;height:14px;border-radius:50%;border:2px solid #374151;transition:background .15s;"></div>
-      <div class="pin-dot" style="width:14px;height:14px;border-radius:50%;border:2px solid #374151;transition:background .15s;"></div>
-      <div class="pin-dot" style="width:14px;height:14px;border-radius:50%;border:2px solid #374151;transition:background .15s;"></div>
-      <div class="pin-dot" style="width:14px;height:14px;border-radius:50%;border:2px solid #374151;transition:background .15s;"></div>
-    </div>
-    <div id="pin-err" style="font-size:12px;color:#ef4444;height:16px;text-align:center;"></div>
-    <div id="pin-pad" style="display:grid;grid-template-columns:repeat(3,56px);gap:10px;">
-      ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(function(k){
-        var empty = k === '';
-        return `<button data-k="${k}" ${empty ? 'disabled style="visibility:hidden"' : `style="background:var(--surface-2,#1e1e2a);border:1px solid var(--border,#2a2a38);color:#e5e7eb;border-radius:10px;font-size:20px;font-weight:600;padding:14px 0;cursor:pointer;width:56px;"`}>${k}</button>`;
-      }).join('')}
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  var entered = '';
-  var dots = overlay.querySelectorAll('.pin-dot');
-  var errEl = overlay.querySelector('#pin-err');
-
-  function updateDots() {
-    dots.forEach(function(d, i) {
-      d.style.background = i < entered.length ? '#8b5cf6' : 'transparent';
-    });
-  }
-
-  function shake() {
-    dots.forEach(function(d){ d.style.background = '#ef4444'; });
-    setTimeout(function(){
-      entered = '';
-      updateDots();
-      errEl.textContent = 'Incorrect PIN — try again';
-    }, 400);
-  }
-
-  overlay.querySelector('#pin-pad').addEventListener('click', function(ev) {
-    var btn = ev.target.closest('button');
-    if (!btn || btn.disabled) return;
-    var key = btn.getAttribute('data-k');
-    if (key === '⌫') {
-      entered = entered.slice(0, -1);
-      errEl.textContent = '';
-      updateDots();
-      return;
-    }
-    if (entered.length >= 4) return;
-    entered += key;
-    updateDots();
-    if (entered.length === 4) {
-      hashPin(entered, function(hash) {
-        if (hash === storedHash) {
-          overlay.remove();
-          onUnlock();
-        } else {
-          shake();
-        }
-      });
-    }
-  });
-}
-
-// Load data after PIN (or immediately if no PIN)
+// Load data after auth
 function loadApexData() {
   var histKey = getHistoryKey();
   chrome.storage.local.get([histKey, 'apexLiveData'], function(result) {
@@ -1240,17 +1665,6 @@ function getSettingsPage() {
   <button class="set-btn" id="set-save-btn">Save Settings</button>
   <button class="set-btn ghost" id="set-clear-btn">Clear 30-day History</button>
 
-  <div class="set-sec">PIN Lock</div>
-  <div class="set-row" style="flex-direction:column;align-items:flex-start;gap:8px">
-    <div style="font-size:12px;color:var(--fg-muted)">Lock the overlay with a 4-digit PIN. Each Chaturbate account gets its own PIN.</div>
-    <div style="display:flex;gap:8px;width:100%">
-      <input type="password" id="set-pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="New PIN (4 digits)" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--fg);padding:8px 12px;font-size:14px;outline:none;">
-      <button class="set-btn" id="set-pin-btn">Set PIN</button>
-    </div>
-    <button class="set-btn ghost" id="set-pin-remove-btn" style="display:none">Remove PIN</button>
-    <div id="set-pin-msg" style="font-size:12px;color:var(--green);display:none"></div>
-  </div>
-
   <div class="set-ver">Apex Revenue v0.5.1 · Creator Intelligence Engine</div>
 </div>`;
 }
@@ -1306,48 +1720,4 @@ function initSettings() {
     });
   }
 
-  // PIN lock buttons
-  var pinInput     = document.getElementById('set-pin-input');
-  var pinBtn       = document.getElementById('set-pin-btn');
-  var pinRemoveBtn = document.getElementById('set-pin-remove-btn');
-  var pinMsg       = document.getElementById('set-pin-msg');
-
-  function showPinMsg(txt, isErr) {
-    if (!pinMsg) return;
-    pinMsg.textContent = txt;
-    pinMsg.style.color = isErr ? 'var(--red, #ef4444)' : 'var(--green)';
-    pinMsg.style.display = 'block';
-    setTimeout(function(){ pinMsg.style.display = 'none'; }, 2500);
-  }
-
-  // Check existing PIN state
-  if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.local.get([getPinKey()], function(r) {
-      if (r[getPinKey()] && pinRemoveBtn) pinRemoveBtn.style.display = '';
-    });
-  }
-
-  if (pinBtn) {
-    pinBtn.addEventListener('click', function() {
-      var pin = pinInput ? pinInput.value.trim() : '';
-      if (!/^\d{4}$/.test(pin)) { showPinMsg('PIN must be exactly 4 digits', true); return; }
-      hashPin(pin, function(hash) {
-        var obj = {}; obj[getPinKey()] = hash;
-        chrome.storage.local.set(obj, function() {
-          showPinMsg('PIN set successfully ✓', false);
-          if (pinInput) pinInput.value = '';
-          if (pinRemoveBtn) pinRemoveBtn.style.display = '';
-        });
-      });
-    });
-  }
-
-  if (pinRemoveBtn) {
-    pinRemoveBtn.addEventListener('click', function() {
-      chrome.storage.local.remove([getPinKey()], function() {
-        showPinMsg('PIN removed', false);
-        pinRemoveBtn.style.display = 'none';
-      });
-    });
-  }
 }
