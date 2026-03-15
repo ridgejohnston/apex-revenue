@@ -26,39 +26,43 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo) {
   });
 });
 
+// ── PostHog Event Capture ─────────────────────────────────────────────────────
+// Sends PostHog capture events directly from the service worker.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'injectPosthog' && sender.tab?.id) {
-    const tabId = sender.tab.id
-    chrome.scripting.executeScript({ target: { tabId }, files: ['array.full.no-external.js'], world: 'MAIN' })
-      .then(() => chrome.scripting.executeScript({ target: { tabId }, files: ['posthog-recorder.js'], world: 'MAIN' }))
-      // Debug step – check what's registered before init fires
-      .then(() => chrome.scripting.executeScript({
-        target: { tabId },
-        world: 'MAIN',
-        func: () => {
-          console.log('[ApexRevenue] __PosthogExtensions__:', JSON.stringify(Object.keys(window.__PosthogExtensions__ || {})))
-          console.log('[ApexRevenue] recorder registered:', !!window.__PosthogExtensions__?.recorder)
+  if (message.type === 'POSTHOG_CAPTURE') {
+    fetch('https://us.i.posthog.com/e/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: 'phc_Megg3zY6SfJFPujxs2AjhxPkv3JqjYQnASxcASHNfGJ',
+        event: message.event,
+        properties: {
+          distinct_id: message.distinct_id,
+          ...message.properties,
         },
-      }))
-      .then(() => chrome.scripting.executeScript({
-        target: { tabId },
-        world: 'MAIN',
-        func: () => {
-          window.posthog?.init('phc_Megg3zY6SfJFPujxs2AjhxPkv3JqjYQnASxcASHNfGJ', {
-            api_host: 'https://us.i.posthog.com',
-            advanced_disable_decide: true,
-            __preview_remote_config: false,
-            disable_session_recording: false,
-            enable_recording_console_log: true,
-            session_recording: { maskAllInputs: true },
-          })
-        },
-      }))
-      .then(() => sendResponse({ success: true }))
-      .catch(err => {
-        console.error('[ApexRevenue] PostHog injection failed:', err)
-        sendResponse({ success: false, error: err.message })
-      })
-    return true
+        timestamp: new Date().toISOString(),
+      }),
+    })
+      .then(() => sendResponse({ ok: true }))
+      .catch(err => sendResponse({ ok: false, error: err.message }))
+    return true // keep channel open for async response
   }
 })
+
+// ── PostHog Request Proxy ─────────────────────────────────────────────────────
+// Forwards PostHog API calls from the page context through the service worker
+// so they aren't blocked by the extension's CSP.
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'POSTHOG_REQUEST') {
+    fetch(message.url, {
+      method: 'POST',
+      headers: message.headers,
+      body: message.data,
+    })
+      .then(res => res.json())
+      .then(data => sendResponse({ ok: true, data }))
+      .catch(err => sendResponse({ ok: false, error: err.message }))
+    return true // keep channel open for async response
+  }
+})
+

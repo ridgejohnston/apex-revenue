@@ -26,7 +26,7 @@
     "https://*.supabase.co/*"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; connect-src https://us.i.posthog.com https://us-assets.i.posthog.com https://*.supabase.co;"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://us.i.posthog.com https://*.supabase.co;"
   },
   "action": {
     "default_popup": "popup.html",

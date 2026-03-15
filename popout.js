@@ -227,11 +227,6 @@ console.log('popout.js executing');
 
     updateToggleButton();
     saveState();
-
-    // Notify background to inject PostHog on this tab if not already done
-    try {
-      chrome.runtime.sendMessage({ action: 'injectPosthog' });
-    } catch (e) {}
   }
 
   function hideOverlay() {
@@ -358,11 +353,15 @@ console.log('popout.js executing');
   });
 
   // Forward content.js messages into the overlay iframe
+  // Validate token from chrome.storage to reject spoofed postMessages
   window.addEventListener('message', function (e) {
     if (!e.data || e.data.source !== 'apex-content') return;
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.postMessage(Object.assign({}, e.data, { source: 'apex-popout' }), '*');
-    }
+    chrome.storage.local.get(['apexOverlayToken'], function (result) {
+      if (result.apexOverlayToken && e.data.token !== result.apexOverlayToken) return;
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(Object.assign({}, e.data, { source: 'apex-popout' }), '*');
+      }
+    });
   });
 
   // ─── Bounds Helpers ───────────────────────────────────────────────────────────
