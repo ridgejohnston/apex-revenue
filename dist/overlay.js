@@ -321,22 +321,26 @@ function initHelpForm() {
     submitBtn.textContent = 'Sending…';
     msgEl.textContent = '';
 
-    apexGetSession().then(function(session) {
-      var userId = session && session.user && session.user.id;
-      // Resolve username: prefer storageUsername, fall back to apexCurrentUser in storage
-      return new Promise(function(resolve) {
-        var name = storageUsername || '';
-        if (name) { resolve({ userId: userId, username: name }); return; }
-        chrome.storage.local.get(['apexCurrentUser', 'apexLinkedAccounts'], function(r) {
-          var linked = r.apexLinkedAccounts || [];
-          name = r.apexCurrentUser || (linked.length ? linked[0].username : '') || '';
-          resolve({ userId: userId, username: name });
-        });
+    // Resolve session + username without requiring a valid JWT —
+    // ticket inserts use the anon key so expired sessions don't block submission
+    new Promise(function(resolve) {
+      chrome.storage.local.get(['apexSession', 'apexCurrentUser', 'apexLinkedAccounts'], function(r) {
+        var session = r.apexSession || null;
+        var userId  = session && session.user && session.user.id || null;
+        var linked  = r.apexLinkedAccounts || [];
+        var name    = storageUsername || r.apexCurrentUser || (linked.length ? linked[0].username : '') || '';
+        resolve({ userId: userId, username: name });
       });
     }).then(function(ctx) {
-      return apexFetch('/rest/v1/Support%20Tickets%20and%20Development%20Ideas', {
+      // Use anon key directly so an expired JWT never blocks a ticket submission
+      return fetch(APEX_SUPABASE_URL + '/rest/v1/Support%20Tickets%20and%20Development%20Ideas', {
         method: 'POST',
-        headers: { 'Prefer': 'return=minimal' },
+        headers: {
+          'apikey':        APEX_SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + APEX_SUPABASE_ANON_KEY,
+          'Content-Type':  'application/json',
+          'Prefer':        'return=minimal',
+        },
         body: JSON.stringify({
           user_id:  ctx.userId   || null,
           username: ctx.username || null,
@@ -344,6 +348,8 @@ function initHelpForm() {
           email:    email        || null,
           message:  message,
         }),
+      }).then(function(res) {
+        if (!res.ok) return res.text().then(function(t) { throw new Error(t); });
       });
     }).then(function() {
       submitBtn.disabled = false;
