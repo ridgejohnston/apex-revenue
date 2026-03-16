@@ -343,7 +343,8 @@ function initHelpForm() {
     }).catch(function(e) {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Send';
-      msgEl.textContent = 'Could not submit — email support@apexrevenue.works';
+      var detail = e && e.message ? ' (' + e.message + ')' : '';
+      msgEl.textContent = 'Could not submit' + detail + ' — email support@apexrevenue.works';
       msgEl.className = 'hp-form-msg err';
       console.error('[ApexRevenue] support ticket error:', e);
     });
