@@ -323,14 +323,26 @@ function initHelpForm() {
 
     apexGetSession().then(function(session) {
       var userId = session && session.user && session.user.id;
+      // Resolve username: prefer storageUsername, fall back to apexCurrentUser in storage
+      return new Promise(function(resolve) {
+        var name = storageUsername || '';
+        if (name) { resolve({ userId: userId, username: name }); return; }
+        chrome.storage.local.get(['apexCurrentUser', 'apexLinkedAccounts'], function(r) {
+          var linked = r.apexLinkedAccounts || [];
+          name = r.apexCurrentUser || (linked.length ? linked[0].username : '') || '';
+          resolve({ userId: userId, username: name });
+        });
+      });
+    }).then(function(ctx) {
       return apexFetch('/rest/v1/Support%20Tickets%20and%20Development%20Ideas', {
         method: 'POST',
         headers: { 'Prefer': 'return=minimal' },
         body: JSON.stringify({
-          user_id: userId || null,
-          type:    selectedType,
-          email:   email   || null,
-          message: message,
+          user_id:  ctx.userId   || null,
+          username: ctx.username || null,
+          type:     selectedType,
+          email:    email        || null,
+          message:  message,
         }),
       });
     }).then(function() {

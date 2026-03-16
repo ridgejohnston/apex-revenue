@@ -33,8 +33,12 @@ Deno.serve(async (req) => {
     const type      = ticket.type       ?? 'unknown';
     const email     = ticket.email      ?? '(not provided)';
     const message   = ticket.message    ?? '(no message)';
+    const username  = ticket.username   ?? null;
     const userId    = ticket.user_id    ?? 'anonymous';
     const createdAt = ticket.created_at ?? new Date().toISOString();
+
+    // Display name: registered username if available, otherwise UUID
+    const displayUser = username ? username : userId;
 
     // ── Supabase Realtime payload (as requested) ──────────────────────────────
     const realtimeSnippet = `
@@ -64,8 +68,12 @@ const channels = supabase.channel('custom-update-channel')
       <td style="padding:8px 12px;background:#111118;border:1px solid rgba(255,255,255,0.07);font-size:13px;color:#ff3f6c">${email}</td>
     </tr>
     <tr>
+      <td style="padding:8px 12px;background:#111118;border:1px solid rgba(255,255,255,0.07);color:#6e6d85;font-size:11px">Username</td>
+      <td style="padding:8px 12px;background:#111118;border:1px solid rgba(255,255,255,0.07);font-size:13px;font-weight:600">${displayUser}</td>
+    </tr>
+    <tr>
       <td style="padding:8px 12px;background:#111118;border:1px solid rgba(255,255,255,0.07);color:#6e6d85;font-size:11px">User ID</td>
-      <td style="padding:8px 12px;background:#111118;border:1px solid rgba(255,255,255,0.07);font-size:11px;color:#6e6d85;font-family:monospace">${userId}</td>
+      <td style="padding:8px 12px;background:#111118;border:1px solid rgba(255,255,255,0.07);font-size:10px;color:#6e6d85;font-family:monospace">${userId}</td>
     </tr>
     <tr>
       <td style="padding:8px 12px;background:#111118;border:1px solid rgba(255,255,255,0.07);border-radius:0 0 0 6px;color:#6e6d85;font-size:11px;vertical-align:top">Message</td>
