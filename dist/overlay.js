@@ -4,15 +4,61 @@
     console.warn('[ApexRevenue] PostHog bundle not loaded — session recording unavailable.');
     return;
   }
+
+  // Builds a streamer profile from the Supabase session + live session data.
+  // Called inside the PostHog loaded callback once apexGetSession() resolves.
+  function getStreamerProfile(session) {
+    var data     = lastData || {};
+    var tph      = data.tokensPerHour || 0;
+    var platform = data.platform || window.location.hostname.replace(/^(?:.*\.)?(\w+)\.\w+$/, '$1');
+    var username = storageUsername || data.username || '';
+    var tier     = tph >= 500 ? 'platinum'
+                 : tph >= 200 ? 'gold'
+                 : tph >= 50  ? 'silver'
+                 :              'bronze';
+    return {
+      id:       (session && session.user && session.user.id)    || null,
+      email:    (session && session.user && session.user.email) || null,
+      username: username,
+      platform: platform,
+      tier:     tier,
+    };
+  }
+
+  // 1. Init PostHog
   posthog.init('phc_Megg3zY6SfJFPujxs2AjhxPkv3JqjYQnASxcASHNfGJ', {
-    api_host: 'https://us.i.posthog.com',
-    autocapture: false,
-    disable_external_dependency_loading: true,
+    api_host:                  'https://us.i.posthog.com',
+    autocapture:               true,
+    capture_pageview:          true,
+    disable_session_recording: false,
     loaded: function(ph) {
-      console.log('[ApexRevenue] PostHog loaded, starting recording...');
-      ph.startSessionRecording();
-      console.log('[ApexRevenue] Recording started:', ph.sessionRecordingStarted());
-    }
+      console.log('[ApexRevenue] PostHog loaded. Recording:', ph.sessionRecordingStarted());
+
+      // 2. Identify the streamer as soon as PostHog is ready
+      apexGetSession().then(function(session) {
+        var streamer = getStreamerProfile(session);
+        if (streamer.id) {
+          ph.identify(
+            streamer.id,
+            {
+              name:                 streamer.username,
+              email:                streamer.email,
+              platform:             streamer.platform,
+              monthly_revenue_tier: streamer.tier,
+            },
+            {
+              first_seen_at:    new Date().toISOString(),
+              initial_platform: streamer.platform,
+            }
+          );
+          console.log('[ApexRevenue] PostHog identified:', streamer.username, '(' + streamer.platform + ')');
+        } else {
+          console.log('[ApexRevenue] PostHog: no session yet — recording as anonymous.');
+        }
+      }).catch(function(e) {
+        console.warn('[ApexRevenue] PostHog identify skipped:', e.message);
+      });
+    },
   });
 })();
 
