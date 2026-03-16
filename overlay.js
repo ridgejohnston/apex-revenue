@@ -109,7 +109,7 @@ function renderPage(page) {
     initLiveCTA();
   }
   else if (page === 'fans') c.innerHTML = getFansPage();
-  else if (page === 'help') c.innerHTML = getHelpPage();
+  else if (page === 'help') { c.innerHTML = getHelpPage(); initHelpForm(); }
   else if (page === 'analytics') c.innerHTML = getAnalyticsPage();
   else if (page === 'settings') { c.innerHTML = getSettingsPage(); initSettings(); }
 }
@@ -267,7 +267,88 @@ function getHelpPage() { return `
   </div>
 </div>
 
-<div class="hp-ver">Apex Revenue v0.5.1 · Creator Intelligence Engine</div>`; }
+<div class="hp-divider"></div>
+
+<div class="hp-sec">
+  <div class="hp-sec-lbl">Submit a Ticket or Idea</div>
+  <div class="hp-form">
+    <div class="hp-form-types">
+      <button class="hp-form-type active" data-type="bug">🐛 Bug Report</button>
+      <button class="hp-form-type" data-type="feature">💡 Feature Idea</button>
+      <button class="hp-form-type" data-type="question">❓ Question</button>
+    </div>
+    <input id="hf-email" class="hp-form-input" type="email" placeholder="Your email (pre-filled if signed in)">
+    <textarea id="hf-message" class="hp-form-input" rows="3" placeholder="Describe the issue or idea…"></textarea>
+    <button id="hf-submit" class="hp-form-submit">Send</button>
+    <div id="hf-msg" class="hp-form-msg"></div>
+  </div>
+</div>
+
+<div class="hp-ver">Apex Revenue v0.6.0 · Creator Intelligence Engine</div>`; }
+
+function initHelpForm() {
+  var selectedType = 'bug';
+
+  // Pre-fill email from Supabase session
+  apexGetSession().then(function(session) {
+    var email = session && session.user && session.user.email;
+    var emailEl = document.getElementById('hf-email');
+    if (email && emailEl) emailEl.value = email;
+  }).catch(function() {});
+
+  // Type pill selector
+  document.querySelectorAll('.hp-form-type').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.hp-form-type').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedType = btn.getAttribute('data-type');
+    });
+  });
+
+  // Submit
+  var submitBtn = document.getElementById('hf-submit');
+  if (!submitBtn) return;
+  submitBtn.addEventListener('click', function() {
+    var message = (document.getElementById('hf-message').value || '').trim();
+    var email   = (document.getElementById('hf-email').value   || '').trim();
+    var msgEl   = document.getElementById('hf-msg');
+    if (!message) {
+      msgEl.textContent = 'Please enter a message.';
+      msgEl.className = 'hp-form-msg err';
+      return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+    msgEl.textContent = '';
+
+    apexGetSession().then(function(session) {
+      var userId = session && session.user && session.user.id;
+      return apexFetch('/rest/v1/support_tickets', {
+        method: 'POST',
+        headers: { 'Prefer': 'return=minimal' },
+        body: JSON.stringify({
+          user_id: userId || null,
+          type:    selectedType,
+          email:   email   || null,
+          message: message,
+        }),
+      });
+    }).then(function() {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send';
+      msgEl.textContent = '✓ Submitted — thank you!';
+      msgEl.className = 'hp-form-msg ok';
+      document.getElementById('hf-message').value = '';
+      setTimeout(function() { msgEl.textContent = ''; }, 4000);
+    }).catch(function(e) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send';
+      msgEl.textContent = 'Could not submit — email support@apexrevenue.works';
+      msgEl.className = 'hp-form-msg err';
+      console.error('[ApexRevenue] support ticket error:', e);
+    });
+  });
+}
 
 function updateHelp(data) {
   if (currentPage !== 'help') return;

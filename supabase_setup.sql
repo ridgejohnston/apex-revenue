@@ -63,7 +63,40 @@ create index if not exists idx_fan_history_updated on fan_history(updated_at);
 -- $$);
 
 
--- ── 4. Verification codes (bio challenge for account ownership) ──────────────
+-- ── 4. Support tickets (submitted via Help page form) ───────────────────────
+create table if not exists support_tickets (
+  id         uuid default gen_random_uuid() primary key,
+  user_id    uuid references auth.users(id) on delete set null,  -- null = anonymous
+  type       text not null check (type in ('bug', 'feature', 'question')),
+  email      text,                -- provided email (may differ from account email)
+  message    text not null,
+  created_at timestamptz default now() not null
+);
+
+create index if not exists idx_support_tickets_user    on support_tickets(user_id);
+create index if not exists idx_support_tickets_created on support_tickets(created_at desc);
+
+alter table support_tickets enable row level security;
+
+drop policy if exists "Users can insert support tickets"    on support_tickets;
+drop policy if exists "Admins can read all support tickets" on support_tickets;
+
+-- Anyone (including anonymous) can insert a ticket
+create policy "Users can insert support tickets"
+  on support_tickets for insert
+  with check (true);
+
+-- Only admins can read tickets (via service role key or admin dashboard)
+create policy "Admins can read all support tickets"
+  on support_tickets for select
+  using (
+    exists (
+      select 1 from profiles where profiles.id = auth.uid() and profiles.is_admin = true
+    )
+  );
+
+
+-- ── 5. Verification codes (bio challenge for account ownership) ─────────────
 create table if not exists verification_codes (
   id          uuid default gen_random_uuid() primary key,
   user_id     uuid references auth.users(id) on delete cascade not null,
@@ -77,7 +110,7 @@ create table if not exists verification_codes (
 create index if not exists idx_verification_codes_user on verification_codes(user_id);
 
 
--- ── 5. Row Level Security ────────────────────────────────────────────────────
+-- ── 6. Row Level Security ────────────────────────────────────────────────────
 alter table profiles             enable row level security;
 alter table platform_accounts    enable row level security;
 alter table fan_history          enable row level security;
@@ -114,7 +147,7 @@ create policy "Users own their verification codes"
   with check (auth.uid() = user_id);
 
 
--- ── 6. Admin account setup ───────────────────────────────────────────────────
+-- ── 7. Admin account setup ───────────────────────────────────────────────────
 -- Run this separately AFTER the main setup to grant admin to your account.
 -- Replace the email below with your Apex Revenue account email.
 --
