@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "Apex Revenue",
   "version": "0.6.0",
+  "key": "epmkaajhfgphamjilpdmfnlchicgdpom",
   "description": "Creator intelligence engine for cam performers. Real-time monetization prompts, whale tracking, fan leaderboards, and session replay analytics.",
   "permissions": [
     "activeTab",
@@ -26,7 +27,7 @@
     "https://*.supabase.co/*"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://us.i.posthog.com https://*.supabase.co;"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com https://*.supabase.co;"
   },
   "action": {
     "default_popup": "popup.html",
@@ -73,6 +74,7 @@
         "overlay.html",
         "overlay.js",
         "overlay.css",
+        "apex-config.js",
         "auth.js",
         "popup.css",
         "array.full.no-external.js",

@@ -1,3 +1,21 @@
+// ── PostHog session recording ─────────────────────────────────────────────────
+(function initPostHog() {
+  if (typeof posthog === 'undefined') {
+    console.warn('[ApexRevenue] PostHog bundle not loaded — session recording unavailable.');
+    return;
+  }
+  posthog.init('phc_Megg3zY6SfJFPujxs2AjhxPkv3JqjYQnASxcASHNfGJ', {
+    api_host: 'https://us.i.posthog.com',
+    autocapture: false,
+    disable_external_dependency_loading: true,
+    loaded: function(ph) {
+      console.log('[ApexRevenue] PostHog loaded, starting recording...');
+      ph.startSessionRecording();
+      console.log('[ApexRevenue] Recording started:', ph.sessionRecordingStarted());
+    }
+  });
+})();
+
 // ── Messaging ─────────────────────────────────────────────────────────────────
 function send(type, extra) {
   window.parent.postMessage(Object.assign({ source: 'apex-overlay', type: type }, extra || {}), '*');
@@ -240,10 +258,13 @@ function tkUsd(tokens) {
 }
 
 window.addEventListener('message', function(e) {
-  // popout.js forwards content.js messages with source rewritten to 'apex-popout'
   if (!e.data || e.data.source !== 'apex-popout') return;
   if (e.data.type === 'LIVE_UPDATE') {
     applyLiveData(e.data.data);
+  } else if (e.data.type === 'START_RECORDING') {
+    if (typeof posthog !== 'undefined') posthog.startSessionRecording();
+  } else if (e.data.type === 'STOP_RECORDING') {
+    if (typeof posthog !== 'undefined') posthog.stopSessionRecording();
   }
 });
 
@@ -1029,7 +1050,7 @@ function showOverlayLoginForm(hint, onVerified) {
     forgotLink.style.pointerEvents = 'none';
     apexFetch('/auth/v1/recover', {
       method: 'POST',
-      body: JSON.stringify({ email: email })
+      body: JSON.stringify({ email: email, redirect_to: 'chrome-extension://epmkaajhfgphamjilpdmfnlchicgdpom/recovery.html' })
     }).then(function() {
       errEl.style.color = '#10b981';
       errEl.textContent = 'Reset link sent — check your email.';

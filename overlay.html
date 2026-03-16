@@ -29,15 +29,8 @@
   </div>
 </div>
 
-<!--
-  PostHog Session Replay Integration (v0.6.0)
-  Load order:
-    1. posthog.js        — full PostHog IIFE library (sets window.posthog)
-    2. posthog-init.js   — patches recorder loader, calls posthog.init()
-    3. overlay.js        — main overlay UI logic
--->
+<script src="apex-config.js"></script>
 <script src="array.full.no-external.js"></script>
-<script src="posthog-init.js"></script>
 <script src="auth.js"></script>
 <script src="overlay.js"></script>
 </body>

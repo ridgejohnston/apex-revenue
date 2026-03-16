@@ -227,6 +227,17 @@ console.log('popout.js executing');
 
     updateToggleButton();
     saveState();
+
+    const sendStart = () => {
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ source: 'apex-popout', type: 'START_RECORDING' }, '*');
+      }
+    };
+    if (!iframe.__overlayReady) {
+      iframe.addEventListener('load', () => { iframe.__overlayReady = true; sendStart(); }, { once: true });
+    } else {
+      sendStart();
+    }
   }
 
   function hideOverlay() {
@@ -238,6 +249,10 @@ console.log('popout.js executing');
 
     if (iframe.__dragHandle)   iframe.__dragHandle.style.display   = 'none';
     if (iframe.__resizeHandle) iframe.__resizeHandle.style.display = 'none';
+
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({ source: 'apex-popout', type: 'STOP_RECORDING' }, '*');
+    }
 
     updateToggleButton();
     saveState();
