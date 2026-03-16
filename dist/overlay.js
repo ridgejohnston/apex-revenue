@@ -323,7 +323,7 @@ function initHelpForm() {
 
     apexGetSession().then(function(session) {
       var userId = session && session.user && session.user.id;
-      return apexFetch('/rest/v1/support_tickets', {
+      return apexFetch('/rest/v1/Support%20Tickets%20and%20Development%20Ideas', {
         method: 'POST',
         headers: { 'Prefer': 'return=minimal' },
         body: JSON.stringify({
