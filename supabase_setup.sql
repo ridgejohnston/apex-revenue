@@ -65,12 +65,15 @@ create index if not exists idx_fan_history_updated on fan_history(updated_at);
 
 -- ── 4. Support tickets (submitted via Help page form) ───────────────────────
 create table if not exists support_tickets (
-  id         uuid default gen_random_uuid() primary key,
-  user_id    uuid references auth.users(id) on delete set null,  -- null = anonymous
-  type       text not null check (type in ('bug', 'feature', 'question')),
-  email      text,                -- provided email (may differ from account email)
-  message    text not null,
-  created_at timestamptz default now() not null
+  id                 uuid default gen_random_uuid() primary key,
+  user_id            uuid references auth.users(id) on delete set null,  -- null = anonymous
+  username           text,                -- registered streaming username
+  type               text not null check (type in ('bug', 'feature', 'question')),
+  email              text,                -- submitter email for reply notifications
+  message            text not null,
+  admin_comment      text,                -- admin reply — triggers email to submitter on UPDATE
+  comment_updated_at timestamptz,         -- set automatically when admin_comment changes
+  created_at         timestamptz default now() not null
 );
 
 create index if not exists idx_support_tickets_user    on support_tickets(user_id);
