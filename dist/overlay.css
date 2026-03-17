@@ -187,3 +187,37 @@ body.minimised #overlay-shell { height:auto; }
 .set-ver{font-size:8px;color:var(--muted);text-align:center;opacity:0.4;padding:10px 0 14px;letter-spacing:0.5px}
 .set-saved{font-size:8px;color:var(--green);text-align:center;height:14px;margin-bottom:4px;opacity:0;transition:opacity 0.3s}
 .set-saved.show{opacity:1}
+/* ── Invite / Referral ──────────────────────────────────────────────────────── */
+.hp-invite-card{background:linear-gradient(135deg,rgba(255,63,108,0.06),rgba(124,92,252,0.06));border:1px solid rgba(255,63,108,0.2);border-radius:10px;padding:12px;margin-bottom:6px}
+.hp-invite-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+.hp-invite-ic{font-size:20px;flex-shrink:0;margin-top:1px}
+.hp-invite-ttl{font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px}
+.hp-invite-tx{font-size:9px;color:var(--muted);line-height:1.5}
+.hp-invite-link-row{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 8px;margin-bottom:8px}
+.hp-invite-link-box{flex:1;font-size:9px;color:var(--accent);font-family:'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hp-invite-copy-btn{background:var(--accent);color:#fff;border:none;border-radius:5px;padding:4px 9px;font-size:8px;font-weight:700;cursor:pointer;flex-shrink:0;transition:filter 0.15s}
+.hp-invite-copy-btn:hover{filter:brightness(1.2)}
+.hp-invite-actions{margin-bottom:8px}
+.hp-invite-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;border:none;border-radius:8px;padding:9px 12px;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.15s}
+.hp-invite-btn-gen{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.hp-invite-btn-gen:hover:not(:disabled){filter:brightness(1.15);transform:translateY(-1px)}
+.hp-invite-btn-gen:disabled{opacity:0.6;cursor:not-allowed}
+.hp-invite-share-row{display:flex;gap:6px}
+.hp-invite-share-btn{flex:1;border:none;border-radius:8px;padding:7px 8px;font-size:8px;font-weight:700;cursor:pointer;transition:background 0.15s}
+.hp-invite-sms{background:rgba(6,214,160,0.15);color:var(--green);border:1px solid rgba(6,214,160,0.25)}
+.hp-invite-sms:hover{background:rgba(6,214,160,0.28)}
+.hp-invite-email{background:rgba(74,158,255,0.12);color:#4a9eff;border:1px solid rgba(74,158,255,0.25)}
+.hp-invite-email:hover{background:rgba(74,158,255,0.24)}
+.hp-invite-err{font-size:8px;color:var(--accent);margin-top:6px;text-align:center}
+/* ── Support Form ───────────────────────────────────────────────────────────── */
+.hp-form-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:6px}
+.hp-form-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-size:9px;font-weight:600;color:var(--text);margin-bottom:8px;outline:none;cursor:pointer}
+.hp-form-select:focus{border-color:rgba(255,63,108,0.4)}
+.hp-form-textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:9px;color:var(--text);resize:none;outline:none;font-family:'Manrope',sans-serif;line-height:1.5;margin-bottom:8px}
+.hp-form-textarea:focus{border-color:rgba(255,63,108,0.4)}
+.hp-form-textarea::placeholder{color:var(--muted)}
+.hp-form-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hp-form-status{font-size:8px;flex:1}
+.hp-form-submit{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:9px;font-weight:700;cursor:pointer;transition:filter 0.15s;flex-shrink:0}
+.hp-form-submit:hover:not(:disabled){filter:brightness(1.15)}
+.hp-form-submit:disabled{opacity:0.5;cursor:not-allowed}

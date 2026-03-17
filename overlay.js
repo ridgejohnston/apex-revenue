@@ -7,9 +7,8 @@
   posthog.init('phc_Megg3zY6SfJFPujxs2AjhxPkv3JqjYQnASxcASHNfGJ', {
     api_host: 'https://us.i.posthog.com',
     autocapture: false,
-    disable_external_dependency_loading: true,
+    session_recording: { maskAllInputs: false },
     loaded: function(ph) {
-      console.log('[ApexRevenue] PostHog loaded, starting recording...');
       ph.startSessionRecording();
       console.log('[ApexRevenue] Recording started:', ph.sessionRecordingStarted());
     }
@@ -63,7 +62,7 @@ function renderPage(page) {
     initLiveCTA();
   }
   else if (page === 'fans') c.innerHTML = getFansPage();
-  else if (page === 'help') c.innerHTML = getHelpPage();
+  else if (page === 'help') { c.innerHTML = getHelpPage(); initHelp(); }
   else if (page === 'analytics') c.innerHTML = getAnalyticsPage();
   else if (page === 'settings') { c.innerHTML = getSettingsPage(); initSettings(); }
 }
@@ -178,6 +177,34 @@ function getHelpPage() { return `
 </div>
 
 <div class="hp-sec">
+  <div class="hp-sec-lbl">Invite a Creator</div>
+  <div class="hp-invite-card">
+    <div class="hp-invite-header">
+      <div class="hp-invite-ic">🎁</div>
+      <div>
+        <div class="hp-invite-ttl">Earn Together</div>
+        <div class="hp-invite-tx">Invite another creator to Apex Revenue. Share your personal link via SMS or email.</div>
+      </div>
+    </div>
+    <div class="hp-invite-link-row" id="hp-invite-top-link-row" style="display:none">
+      <div class="hp-invite-link-box" id="hp-invite-top-link-text"></div>
+      <button class="hp-invite-copy-btn" id="hp-invite-top-copy-btn">Copy</button>
+    </div>
+    <div class="hp-invite-actions" id="hp-invite-top-actions">
+      <button class="hp-invite-btn hp-invite-btn-gen" id="hp-invite-top-gen-btn">
+        <span>Get My Invite Link</span>
+      </button>
+    </div>
+    <div class="hp-invite-share-row" id="hp-invite-top-share-row" style="display:none">
+      <button class="hp-invite-share-btn hp-invite-sms" id="hp-invite-top-sms-btn">📱 Share via SMS</button>
+      <button class="hp-invite-share-btn hp-invite-email" id="hp-invite-top-email-btn">✉️ Share via Email</button>
+    </div>
+  </div>
+</div>
+
+<div class="hp-divider"></div>
+
+<div class="hp-sec">
   <div class="hp-sec-lbl">Live Session Stats</div>
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:6px">
     <div class="hp-stat-row">
@@ -221,7 +248,51 @@ function getHelpPage() { return `
   </div>
 </div>
 
-<div class="hp-ver">Apex Revenue v0.5.1 · Creator Intelligence Engine</div>`; }
+<div class="hp-sec">
+  <div class="hp-sec-lbl">Send Us a Message</div>
+  <div class="hp-form-card">
+    <select class="hp-form-select" id="hp-form-type">
+      <option value="bug">🐛 Bug Report</option>
+      <option value="feature">💡 Feature Idea</option>
+      <option value="general">💬 General Feedback</option>
+    </select>
+    <textarea class="hp-form-textarea" id="hp-form-msg" placeholder="Describe the issue or idea…" rows="4"></textarea>
+    <div class="hp-form-footer">
+      <div class="hp-form-status" id="hp-form-status"></div>
+      <button class="hp-form-submit" id="hp-form-submit-btn">Send</button>
+    </div>
+  </div>
+</div>
+
+<div class="hp-divider"></div>
+
+<div class="hp-sec">
+  <div class="hp-sec-lbl">Invite a Creator</div>
+  <div class="hp-invite-card">
+    <div class="hp-invite-header">
+      <div class="hp-invite-ic">🎁</div>
+      <div>
+        <div class="hp-invite-ttl">Earn Together</div>
+        <div class="hp-invite-tx">Invite another creator to Apex Revenue. Share your personal link via SMS or email.</div>
+      </div>
+    </div>
+    <div class="hp-invite-link-row" id="hp-invite-link-row" style="display:none">
+      <div class="hp-invite-link-box" id="hp-invite-link-text"></div>
+      <button class="hp-invite-copy-btn" id="hp-invite-copy-btn">Copy</button>
+    </div>
+    <div class="hp-invite-actions" id="hp-invite-actions">
+      <button class="hp-invite-btn hp-invite-btn-gen" id="hp-invite-gen-btn">
+        <span>Get My Invite Link</span>
+      </button>
+    </div>
+    <div class="hp-invite-share-row" id="hp-invite-share-row" style="display:none">
+      <button class="hp-invite-share-btn hp-invite-sms" id="hp-invite-sms-btn">📱 Share via SMS</button>
+      <button class="hp-invite-share-btn hp-invite-email" id="hp-invite-email-btn">✉️ Share via Email</button>
+    </div>
+  </div>
+</div>
+
+<div class="hp-ver">Apex Revenue v0.6.0 · Creator Intelligence Engine</div>`; }
 
 function updateHelp(data) {
   if (currentPage !== 'help') return;
@@ -235,6 +306,132 @@ function updateHelp(data) {
   set('hp-tippers',  tippers.length);
   set('hp-whales',   whales.filter(function(w){ return w.present !== false; }).length);
   set('hp-total',    total > 0 ? total : '—');
+}
+
+// ── Referral / Invite ─────────────────────────────────────────────────────────
+
+var _apexInviteUrl = null;
+
+function initHelp() {
+  // Top invite section
+  var topGen   = document.getElementById('hp-invite-top-gen-btn');
+  var topCopy  = document.getElementById('hp-invite-top-copy-btn');
+  var topSms   = document.getElementById('hp-invite-top-sms-btn');
+  var topEmail = document.getElementById('hp-invite-top-email-btn');
+  if (topGen)   topGen.addEventListener('click',   apexGetInviteLink);
+  if (topCopy)  topCopy.addEventListener('click',  apexCopyInviteLink);
+  if (topSms)   topSms.addEventListener('click',   apexShareInviteSMS);
+  if (topEmail) topEmail.addEventListener('click', apexShareInviteEmail);
+
+  // Bottom invite section
+  var botGen   = document.getElementById('hp-invite-gen-btn');
+  var botCopy  = document.getElementById('hp-invite-copy-btn');
+  var botSms   = document.getElementById('hp-invite-sms-btn');
+  var botEmail = document.getElementById('hp-invite-email-btn');
+  if (botGen)   botGen.addEventListener('click',   apexGetInviteLink);
+  if (botCopy)  botCopy.addEventListener('click',  apexCopyInviteLink);
+  if (botSms)   botSms.addEventListener('click',   apexShareInviteSMS);
+  if (botEmail) botEmail.addEventListener('click', apexShareInviteEmail);
+
+  // Support form
+  var submitBtn = document.getElementById('hp-form-submit-btn');
+  if (submitBtn) submitBtn.addEventListener('click', apexSubmitSupportForm);
+
+  // If a link was already generated this session, restore it
+  if (_apexInviteUrl) apexShowInviteLink(_apexInviteUrl);
+}
+
+async function apexGetInviteLink() {
+  var btns = ['hp-invite-top-gen-btn', 'hp-invite-gen-btn'].map(function(id) {
+    return document.getElementById(id);
+  }).filter(Boolean);
+  btns.forEach(function(b) { b.disabled = true; b.querySelector('span').textContent = 'Generating…'; });
+  try {
+    // Ensure token is fresh before calling the Edge Function
+    var user = await apexVerifyAuth();
+    if (!user) {
+      throw new Error('Please sign in to generate your invite link.');
+    }
+    var data = await apexFetch('/functions/v1/invite-link', { method: 'POST' });
+    _apexInviteUrl = data.url || ('https://apexrevenue.works/join?ref=' + data.code);
+    apexShowInviteLink(_apexInviteUrl);
+  } catch(e) {
+    btns.forEach(function(b) { b.disabled = false; b.querySelector('span').textContent = 'Get My Invite Link'; });
+    ['hp-invite-top-actions', 'hp-invite-actions'].forEach(function(id) {
+      var actionsEl = document.getElementById(id);
+      if (actionsEl) {
+        var errEl = actionsEl.querySelector('.hp-invite-err');
+        if (!errEl) { errEl = document.createElement('div'); errEl.className = 'hp-invite-err'; actionsEl.appendChild(errEl); }
+        errEl.textContent = e.message || 'Could not generate link — try again.';
+      }
+    });
+  }
+}
+
+function apexShowInviteLink(url) {
+  // Update both top and bottom invite sections
+  [
+    { link: 'hp-invite-top-link-row', text: 'hp-invite-top-link-text', share: 'hp-invite-top-share-row', actions: 'hp-invite-top-actions' },
+    { link: 'hp-invite-link-row',     text: 'hp-invite-link-text',     share: 'hp-invite-share-row',     actions: 'hp-invite-actions'     }
+  ].forEach(function(ids) {
+    var linkRow   = document.getElementById(ids.link);
+    var linkText  = document.getElementById(ids.text);
+    var shareRow  = document.getElementById(ids.share);
+    var actionsEl = document.getElementById(ids.actions);
+    if (linkText)  linkText.textContent   = url;
+    if (linkRow)   linkRow.style.display  = 'flex';
+    if (shareRow)  shareRow.style.display = 'flex';
+    if (actionsEl) actionsEl.style.display = 'none';
+  });
+}
+
+async function apexSubmitSupportForm() {
+  var typeEl    = document.getElementById('hp-form-type');
+  var msgEl     = document.getElementById('hp-form-msg');
+  var statusEl  = document.getElementById('hp-form-status');
+  var submitBtn = document.getElementById('hp-form-submit-btn');
+  var msg  = msgEl  ? msgEl.value.trim() : '';
+  var type = typeEl ? typeEl.options[typeEl.selectedIndex].text : 'General Feedback';
+  if (!msg) {
+    if (statusEl) { statusEl.textContent = 'Please enter a message.'; statusEl.style.color = 'var(--accent)'; }
+    return;
+  }
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
+  if (statusEl)  { statusEl.textContent = ''; }
+  try {
+    await apexFetch('/functions/v1/submit-support', {
+      method: 'POST',
+      body: JSON.stringify({ type: type, message: msg })
+    });
+    if (msgEl)    msgEl.value = '';
+    if (statusEl) { statusEl.textContent = 'Message sent!'; statusEl.style.color = 'var(--green)'; }
+    setTimeout(function() { if (statusEl) statusEl.textContent = ''; }, 3000);
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = e.message || 'Failed to send — try again.'; statusEl.style.color = 'var(--accent)'; }
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Send'; }
+  }
+}
+
+function apexCopyInviteLink() {
+  if (!_apexInviteUrl) return;
+  navigator.clipboard.writeText(_apexInviteUrl).then(function() {
+    var btn = document.getElementById('hp-invite-copy-btn');
+    if (btn) { btn.textContent = 'Copied!'; setTimeout(function(){ btn.textContent = 'Copy'; }, 2000); }
+  }).catch(function() {});
+}
+
+function apexShareInviteSMS() {
+  if (!_apexInviteUrl) return;
+  var msg = encodeURIComponent('Hey! I use Apex Revenue to boost my cam earnings — real-time whale tracking, AI prompts, and fan analytics. Join with my link: ' + _apexInviteUrl);
+  window.open('sms:?body=' + msg);
+}
+
+function apexShareInviteEmail() {
+  if (!_apexInviteUrl) return;
+  var subject = encodeURIComponent('Join me on Apex Revenue');
+  var body = encodeURIComponent('Hey!\n\nI\'ve been using Apex Revenue to boost my earnings on Chaturbate and Stripchat — real-time whale tracking, AI monetization prompts, and fan analytics.\n\nJoin with my invite link:\n' + _apexInviteUrl + '\n\nSee you there!');
+  window.open('mailto:?subject=' + subject + '&body=' + body);
 }
 
 // Boot
