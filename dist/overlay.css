@@ -128,6 +128,21 @@ body.minimised #overlay-shell { height:auto; }
 .hp-stat-val{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--text);text-align:center}
 .hp-stat-lbl{font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);text-align:center;margin-top:2px}
 .hp-ver{font-size:8px;color:var(--muted);text-align:center;opacity:0.4;padding:10px 0 14px;letter-spacing:0.5px}
+/* ── Help page — support form ──────────────────────────────────────────────── */
+.hp-form{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin:0 12px 6px}
+.hp-form-types{display:flex;gap:5px;margin-bottom:10px}
+.hp-form-type{flex:1;padding:6px 4px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);font-size:8px;font-weight:600;letter-spacing:0.4px;cursor:pointer;text-align:center;transition:all 0.15s;font-family:inherit}
+.hp-form-type.active{border-color:var(--accent);background:rgba(255,63,108,0.1);color:var(--accent)}
+.hp-form-type:hover:not(.active){border-color:rgba(255,255,255,0.15);color:var(--text)}
+.hp-form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text);font-size:9px;font-family:inherit;resize:none;outline:none;display:block;margin-bottom:6px}
+.hp-form-input:focus{border-color:rgba(255,63,108,0.4)}
+.hp-form-input::placeholder{color:var(--muted)}
+.hp-form-submit{width:100%;padding:8px;border:none;border-radius:7px;background:var(--accent);color:#fff;font-size:9px;font-weight:700;letter-spacing:0.5px;cursor:pointer;transition:opacity 0.15s;font-family:inherit}
+.hp-form-submit:hover:not(:disabled){opacity:0.85}
+.hp-form-submit:disabled{opacity:0.45;cursor:default}
+.hp-form-msg{font-size:8px;text-align:center;margin-top:6px;min-height:12px;line-height:1.4}
+.hp-form-msg.ok{color:var(--green)}
+.hp-form-msg.err{color:var(--accent)}
 
 /* ── Analytics page ────────────────────────────────────────────────────── */
 .an-hdr{padding:12px 12px 8px}

@@ -677,7 +677,7 @@ function apexShareAdminInviteSMS() {
 function apexShareAdminInviteEmail() {
   if (!_apexAdminInviteUrl) return;
   var subject = encodeURIComponent('Join Apex Revenue');
-  var body = encodeURIComponent('Hey!\n\nCheck out Apex Revenue — real-time whale tracking, AI monetization prompts, and fan analytics for cam performers.\n\nSign up here:\n' + _apexAdminInviteUrl + '\n\nSee you there!');
+  var body = encodeURIComponent('Hey!\n\nCheck out Apex Revenue — real-time engagement analytics, AI monetization prompts, and fan leaderboards for live streamers.\n\nSign up here:\n' + _apexAdminInviteUrl + '\n\nSee you there!');
   window.open('mailto:?subject=' + subject + '&body=' + body);
 }
 
@@ -693,14 +693,14 @@ function apexCopyInviteLink() {
 
 function apexShareInviteSMS() {
   if (!_apexInviteUrl) return;
-  var msg = encodeURIComponent('Hey! I use Apex Revenue to boost my cam earnings — real-time whale tracking, AI prompts, and fan analytics. Join with my link: ' + _apexInviteUrl);
+  var msg = encodeURIComponent('Hey! I use Apex Revenue to boost my streaming earnings — real-time engagement tracking, AI prompts, and fan analytics. Join with my link: ' + _apexInviteUrl);
   window.open('sms:?body=' + msg);
 }
 
 function apexShareInviteEmail() {
   if (!_apexInviteUrl) return;
   var subject = encodeURIComponent('Join me on Apex Revenue');
-  var body = encodeURIComponent('Hey!\n\nI\'ve been using Apex Revenue to boost my earnings on Chaturbate and Stripchat — real-time whale tracking, AI monetization prompts, and fan analytics.\n\nJoin with my invite link:\n' + _apexInviteUrl + '\n\nSee you there!');
+  var body = encodeURIComponent('Hey!\n\nI\'ve been using Apex Revenue to boost my streaming earnings — real-time engagement tracking, AI monetization prompts, and fan analytics.\n\nJoin with my invite link:\n' + _apexInviteUrl + '\n\nSee you there!');
   window.open('mailto:?subject=' + subject + '&body=' + body);
 }
 
@@ -718,7 +718,7 @@ document.querySelectorAll('.nav-item').forEach(function(item) {
   });
 });
 
-// ── Token → USD conversion (Chaturbate streamer rate: 1 tk = $0.05) ────────────
+// ── Token → USD conversion (streamer rate: 1 tk = $0.05) ────────────────────
 function tkUsd(tokens) {
   var usd = (tokens || 0) * 0.05;
   return '$' + (usd >= 10 ? Math.round(usd) : usd.toFixed(2));

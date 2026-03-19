@@ -80,7 +80,43 @@ create index if not exists idx_fan_history_updated on fan_history(updated_at);
 -- $$);
 
 
--- ── 4. Verification codes (bio challenge for account ownership) ──────────────
+-- ── 4. Support tickets (submitted via Help page form) ───────────────────────
+create table if not exists support_tickets (
+  id                 uuid default gen_random_uuid() primary key,
+  user_id            uuid references auth.users(id) on delete set null,  -- null = anonymous
+  username           text,                -- registered streaming username
+  type               text not null check (type in ('bug', 'feature', 'question')),
+  email              text,                -- submitter email for reply notifications
+  message            text not null,
+  admin_comment      text,                -- admin reply — triggers email to submitter on UPDATE
+  comment_updated_at timestamptz,         -- set automatically when admin_comment changes
+  created_at         timestamptz default now() not null
+);
+
+create index if not exists idx_support_tickets_user    on support_tickets(user_id);
+create index if not exists idx_support_tickets_created on support_tickets(created_at desc);
+
+alter table support_tickets enable row level security;
+
+drop policy if exists "Users can insert support tickets"    on support_tickets;
+drop policy if exists "Admins can read all support tickets" on support_tickets;
+
+-- Anyone (including anonymous) can insert a ticket
+create policy "Users can insert support tickets"
+  on support_tickets for insert
+  with check (true);
+
+-- Only admins can read tickets (via service role key or admin dashboard)
+create policy "Admins can read all support tickets"
+  on support_tickets for select
+  using (
+    exists (
+      select 1 from profiles where profiles.id = auth.uid() and profiles.is_admin = true
+    )
+  );
+
+
+-- ── 5. Verification codes (bio challenge for account ownership) ─────────────
 create table if not exists verification_codes (
   id          uuid default gen_random_uuid() primary key,
   user_id     uuid references auth.users(id) on delete cascade not null,
