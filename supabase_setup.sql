@@ -14,11 +14,28 @@ create table if not exists profiles (
 -- If table already exists from a previous run, add the column safely
 alter table profiles add column if not exists is_admin boolean default false not null;
 
--- Auto-create profile when a new user signs up
+-- Auto-create profile and record referral when a new user signs up
+-- The Lovable.dev /join page stores the referral code in user metadata on signup:
+--   supabase.auth.signUp({ email, password, options: { data: { referral_code: '...' } } })
 create or replace function handle_new_user()
 returns trigger language plpgsql security definer as $$
+declare
+  ref_code text;
+  referrer uuid;
 begin
   insert into public.profiles (id) values (new.id) on conflict do nothing;
+
+  -- Check if this signup came with a referral code (set via user metadata)
+  ref_code := new.raw_user_meta_data ->> 'referral_code';
+  if ref_code is not null then
+    select user_id into referrer from public.referral_codes where code = ref_code;
+    if referrer is not null then
+      insert into public.referrals (referrer_id, referred_user_id, referral_code, status)
+      values (referrer, new.id, ref_code, 'active')
+      on conflict do nothing;
+    end if;
+  end if;
+
   return new;
 end;
 $$;
@@ -77,17 +94,50 @@ create table if not exists verification_codes (
 create index if not exists idx_verification_codes_user on verification_codes(user_id);
 
 
--- ── 5. Row Level Security ────────────────────────────────────────────────────
+-- ── 5. Referral codes (one per user, or universal admin codes) ───────────────
+create table if not exists referral_codes (
+  id          uuid default gen_random_uuid() primary key,
+  user_id     uuid references profiles(id) on delete cascade not null,
+  code        text not null unique,
+  is_universal boolean default false not null,  -- true = admin-created, shareable by anyone
+  label       text,                              -- optional label e.g. 'Twitter Campaign March'
+  created_at  timestamptz default now() not null
+);
+-- Regular users still get one personal code; universal codes are unlimited per admin
+
+create index if not exists idx_referral_codes_code on referral_codes(code);
+
+
+-- ── 6. Referrals (tracks who referred whom on signup) ──────────────────────
+create table if not exists referrals (
+  id               uuid default gen_random_uuid() primary key,
+  referrer_id      uuid references profiles(id) on delete cascade not null,
+  referred_user_id uuid references profiles(id) on delete cascade not null unique,
+  referral_code    text references referral_codes(code) not null,
+  status           text default 'pending' not null,   -- 'pending', 'active', 'rewarded'
+  created_at       timestamptz default now() not null
+);
+
+create index if not exists idx_referrals_referrer on referrals(referrer_id);
+create index if not exists idx_referrals_referred on referrals(referred_user_id);
+
+
+-- ── 7. Row Level Security ────────────────────────────────────────────────────
 alter table profiles             enable row level security;
 alter table platform_accounts    enable row level security;
 alter table fan_history          enable row level security;
 alter table verification_codes   enable row level security;
+alter table referral_codes       enable row level security;
+alter table referrals            enable row level security;
 
 -- Drop policies first so this script is safe to re-run
 drop policy if exists "Users own their profile"              on profiles;
 drop policy if exists "Users own their platform accounts"    on platform_accounts;
 drop policy if exists "Users own their fan history"          on fan_history;
 drop policy if exists "Users own their verification codes"   on verification_codes;
+drop policy if exists "Users own their referral codes"       on referral_codes;
+drop policy if exists "Users own their referrals"            on referrals;
+drop policy if exists "Anyone can read referral codes"       on referral_codes;
 
 -- Profiles: users can only read/write their own row
 create policy "Users own their profile"
@@ -113,8 +163,24 @@ create policy "Users own their verification codes"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+-- Referral codes: users manage their own; anyone can look up a code (for /join page)
+create policy "Users own their referral codes"
+  on referral_codes for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
--- ── 6. Admin account setup ───────────────────────────────────────────────────
+create policy "Anyone can read referral codes"
+  on referral_codes for select
+  using (true);
+
+-- Referrals: users can see referrals they made
+create policy "Users own their referrals"
+  on referrals for all
+  using (auth.uid() = referrer_id)
+  with check (auth.uid() = referrer_id);
+
+
+-- ── 8. Admin account setup ───────────────────────────────────────────────────
 -- Run this separately AFTER the main setup to grant admin to your account.
 -- Replace the email below with your Apex Revenue account email.
 --

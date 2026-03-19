@@ -199,6 +199,24 @@ function getHelpPage() { return `
       <button class="hp-invite-share-btn hp-invite-sms" id="hp-invite-top-sms-btn">📱 Share via SMS</button>
       <button class="hp-invite-share-btn hp-invite-email" id="hp-invite-top-email-btn">✉️ Share via Email</button>
     </div>
+    <div id="hp-referral-stats" style="margin-top:10px;display:none">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600">Your Referrals</div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center">
+          <div id="hp-ref-total" style="font-size:18px;font-weight:700;color:var(--text)">—</div>
+          <div style="font-size:9px;color:var(--muted)">Total</div>
+        </div>
+        <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center">
+          <div id="hp-ref-active" style="font-size:18px;font-weight:700;color:var(--green,#22c55e)">—</div>
+          <div style="font-size:9px;color:var(--muted)">Active</div>
+        </div>
+        <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center">
+          <div id="hp-ref-pending" style="font-size:18px;font-weight:700;color:var(--accent,#e83e8c)">—</div>
+          <div style="font-size:9px;color:var(--muted)">Pending</div>
+        </div>
+      </div>
+      <div id="hp-ref-recent" style="margin-top:8px"></div>
+    </div>
   </div>
 </div>
 
@@ -292,7 +310,57 @@ function getHelpPage() { return `
   </div>
 </div>
 
-<div class="hp-ver">Apex Revenue v0.6.0 · Creator Intelligence Engine</div>`; }
+<div id="hp-admin-invite-section" style="display:none">
+  <div class="hp-divider"></div>
+  <div class="hp-sec">
+    <div class="hp-sec-lbl">Admin: Universal Invite Links</div>
+    <div class="hp-invite-card" style="border-color:rgba(124,92,252,.3)">
+      <div class="hp-invite-header">
+        <div class="hp-invite-ic">👑</div>
+        <div>
+          <div class="hp-invite-ttl">Universal Referral Link</div>
+          <div class="hp-invite-tx">Generate shareable invite links not tied to any user. Use for campaigns, social posts, or mass outreach.</div>
+        </div>
+      </div>
+      <input class="hp-form-textarea" id="hp-admin-invite-label" placeholder="Label (optional) e.g. Twitter Campaign March" style="min-height:0;height:32px;margin-bottom:8px;font-size:11px;padding:6px 10px;resize:none">
+      <div class="hp-invite-link-row" id="hp-admin-invite-link-row" style="display:none">
+        <div class="hp-invite-link-box" id="hp-admin-invite-link-text"></div>
+        <button class="hp-invite-copy-btn" id="hp-admin-invite-copy-btn">Copy</button>
+      </div>
+      <div class="hp-invite-actions" id="hp-admin-invite-actions">
+        <button class="hp-invite-btn hp-invite-btn-gen" id="hp-admin-invite-gen-btn" style="background:linear-gradient(135deg,#7c5cfc,#5b3fd9)">
+          <span>Generate Universal Link</span>
+        </button>
+      </div>
+      <div class="hp-invite-share-row" id="hp-admin-invite-share-row" style="display:none">
+        <button class="hp-invite-share-btn hp-invite-sms" id="hp-admin-invite-sms-btn">📱 SMS</button>
+        <button class="hp-invite-share-btn hp-invite-email" id="hp-admin-invite-email-btn">✉️ Email</button>
+      </div>
+      <div id="hp-admin-invite-history" style="margin-top:8px"></div>
+    </div>
+    <div id="hp-admin-stats" style="margin-top:12px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600">Global Overview</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div style="flex:1;background:var(--surface);border:1px solid rgba(124,92,252,.2);border-radius:8px;padding:8px 10px;text-align:center">
+          <div id="hp-admin-total-users" style="font-size:18px;font-weight:700;color:#7c5cfc">—</div>
+          <div style="font-size:9px;color:var(--muted)">Users</div>
+        </div>
+        <div style="flex:1;background:var(--surface);border:1px solid rgba(124,92,252,.2);border-radius:8px;padding:8px 10px;text-align:center">
+          <div id="hp-admin-total-referrals" style="font-size:18px;font-weight:700;color:#7c5cfc">—</div>
+          <div style="font-size:9px;color:var(--muted)">Referrals</div>
+        </div>
+        <div style="flex:1;background:var(--surface);border:1px solid rgba(124,92,252,.2);border-radius:8px;padding:8px 10px;text-align:center">
+          <div id="hp-admin-total-codes" style="font-size:18px;font-weight:700;color:#7c5cfc">—</div>
+          <div style="font-size:9px;color:var(--muted)">Codes</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600">Universal Code Performance</div>
+      <div id="hp-admin-code-list" style="font-size:11px"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hp-ver">Apex Revenue v0.6.1 · Creator Intelligence Engine</div>`; }
 
 function updateHelp(data) {
   if (currentPage !== 'help') return;
@@ -339,6 +407,130 @@ function initHelp() {
 
   // If a link was already generated this session, restore it
   if (_apexInviteUrl) apexShowInviteLink(_apexInviteUrl);
+
+  // Admin universal invite section — only show for admins
+  chrome.storage.local.get([APEX_ADMIN_KEY], function(r) {
+    if (r[APEX_ADMIN_KEY] === true) {
+      var adminSection = document.getElementById('hp-admin-invite-section');
+      if (adminSection) adminSection.style.display = 'block';
+
+      var adminGen   = document.getElementById('hp-admin-invite-gen-btn');
+      var adminCopy  = document.getElementById('hp-admin-invite-copy-btn');
+      var adminSms   = document.getElementById('hp-admin-invite-sms-btn');
+      var adminEmail = document.getElementById('hp-admin-invite-email-btn');
+      if (adminGen)   adminGen.addEventListener('click',   apexGetUniversalInviteLink);
+      if (adminCopy)  adminCopy.addEventListener('click',  apexCopyAdminInviteLink);
+      if (adminSms)   adminSms.addEventListener('click',   apexShareAdminInviteSMS);
+      if (adminEmail) adminEmail.addEventListener('click',  apexShareAdminInviteEmail);
+    }
+  });
+
+  // Fetch referral stats on page load
+  apexLoadReferralStats();
+}
+
+// ── Referral stats loader ────────────────────────────────────────────────────
+
+async function apexLoadReferralStats() {
+  try {
+    var session = await apexGetSession();
+    if (!session || !session.access_token) return;
+    var refreshed = await apexRefreshSession();
+    var token = (refreshed && refreshed.access_token) || session.access_token;
+    var data = await apexEdgeFetch('/functions/v1/referral-stats', { access_token: token });
+
+    // Personal stats
+    if (data.personal && data.personal.code) {
+      var statsEl = document.getElementById('hp-referral-stats');
+      if (statsEl) statsEl.style.display = 'block';
+
+      var totalEl   = document.getElementById('hp-ref-total');
+      var activeEl  = document.getElementById('hp-ref-active');
+      var pendingEl = document.getElementById('hp-ref-pending');
+      if (totalEl)   totalEl.textContent   = data.personal.totalReferrals;
+      if (activeEl)  activeEl.textContent  = data.personal.activeReferrals;
+      if (pendingEl) pendingEl.textContent = data.personal.pendingReferrals;
+
+      // Show recent referrals list
+      var recentEl = document.getElementById('hp-ref-recent');
+      if (recentEl && data.personal.referrals.length > 0) {
+        var html = '<div style="font-size:10px;color:var(--muted);margin-top:6px;margin-bottom:4px;font-weight:600">Recent</div>';
+        data.personal.referrals.slice(0, 5).forEach(function(r) {
+          var date = new Date(r.date).toLocaleDateString();
+          var statusColor = r.status === 'active' ? 'var(--green,#22c55e)' : 'var(--accent,#e83e8c)';
+          var statusDot = '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + statusColor + ';margin-right:6px"></span>';
+          html += '<div style="font-size:11px;color:var(--text);padding:4px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">';
+          html += '<span>' + statusDot + r.status + '</span>';
+          html += '<span style="color:var(--muted);font-size:10px">' + date + '</span>';
+          html += '</div>';
+        });
+        recentEl.innerHTML = html;
+      }
+    }
+
+    // Admin stats
+    if (data.admin) {
+      var totalUsersEl    = document.getElementById('hp-admin-total-users');
+      var totalRefsEl     = document.getElementById('hp-admin-total-referrals');
+      var totalCodesEl    = document.getElementById('hp-admin-total-codes');
+      if (totalUsersEl) totalUsersEl.textContent = data.admin.globalStats.totalUsers;
+      if (totalRefsEl)  totalRefsEl.textContent  = data.admin.globalStats.totalReferrals;
+      if (totalCodesEl) totalCodesEl.textContent = data.admin.globalStats.totalCodes;
+
+      // Universal code performance list
+      var codeListEl = document.getElementById('hp-admin-code-list');
+      if (codeListEl && data.admin.universalCodes.length > 0) {
+        var html = '';
+        data.admin.universalCodes.forEach(function(uc) {
+          var label = uc.label ? '<span style="color:var(--text);font-weight:600">' + uc.label + '</span>' : '<span style="color:var(--muted);font-style:italic">No label</span>';
+          var date = new Date(uc.created_at).toLocaleDateString();
+          html += '<div style="background:var(--surface);border:1px solid rgba(124,92,252,.15);border-radius:8px;padding:8px 10px;margin-bottom:6px">';
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+          html += label;
+          html += '<span style="font-size:9px;color:var(--muted)">' + date + '</span>';
+          html += '</div>';
+          html += '<div style="font-family:monospace;font-size:10px;color:#7c5cfc;margin-bottom:4px">' + uc.code + '</div>';
+          html += '<div style="display:flex;gap:12px;font-size:10px;color:var(--muted)">';
+          html += '<span><strong style="color:var(--text)">' + uc.totalReferrals + '</strong> signups</span>';
+          html += '<span><strong style="color:var(--green,#22c55e)">' + uc.activeReferrals + '</strong> active</span>';
+          html += '</div>';
+          html += '</div>';
+        });
+        codeListEl.innerHTML = html;
+      } else if (codeListEl) {
+        codeListEl.innerHTML = '<div style="color:var(--muted);font-size:11px;font-style:italic;padding:6px 0">No universal codes generated yet</div>';
+      }
+    }
+  } catch(e) {
+    console.log('[ApexReferral] Could not load referral stats:', e.message);
+  }
+}
+
+// ── Edge Function fetch helper ──────────────────────────────────────────────
+// Uses the anon key for gateway auth and passes the user token in the body.
+// This avoids 401s from the Supabase Edge Function gateway when the user JWT
+// format doesn't match what the gateway expects.
+async function apexEdgeFetch(path, bodyObj) {
+  var url = APEX_SUPABASE_URL + path;
+  console.log('[ApexEdge] fetch ->', url);
+  var res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'apikey': APEX_SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + APEX_SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(bodyObj || {})
+  });
+  var text = await res.text();
+  var data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch(e) { data = { raw: text }; }
+  console.log('[ApexEdge] response', res.status, data);
+  if (!res.ok) {
+    var msg = data.error || data.message || data.msg || ('HTTP ' + res.status);
+    throw new Error(msg);
+  }
+  return data;
 }
 
 async function apexGetInviteLink() {
@@ -347,12 +539,16 @@ async function apexGetInviteLink() {
   }).filter(Boolean);
   btns.forEach(function(b) { b.disabled = true; b.querySelector('span').textContent = 'Generating…'; });
   try {
-    // Ensure token is fresh before calling the Edge Function
-    var user = await apexVerifyAuth();
-    if (!user) {
-      throw new Error('Please sign in to generate your invite link.');
+    // Force a fresh token before calling the Edge Function
+    var session = await apexGetSession();
+    if (!session || !session.refresh_token) {
+      throw new Error('Session expired. Please sign out and sign back in.');
     }
-    var data = await apexFetch('/functions/v1/invite-link', { method: 'POST' });
+    var refreshed = await apexRefreshSession();
+    if (!refreshed || !refreshed.access_token) {
+      throw new Error('Session expired. Please sign out and sign back in.');
+    }
+    var data = await apexEdgeFetch('/functions/v1/invite-link', { access_token: refreshed.access_token });
     _apexInviteUrl = data.url || ('https://apexrevenue.works/join?ref=' + data.code);
     apexShowInviteLink(_apexInviteUrl);
   } catch(e) {
@@ -385,28 +581,107 @@ function apexShowInviteLink(url) {
   });
 }
 
-function apexSubmitSupportForm() {
-  var typeEl   = document.getElementById('hp-form-type');
-  var msgEl    = document.getElementById('hp-form-msg');
-  var statusEl = document.getElementById('hp-form-status');
+async function apexSubmitSupportForm() {
+  var typeEl    = document.getElementById('hp-form-type');
+  var msgEl     = document.getElementById('hp-form-msg');
+  var statusEl  = document.getElementById('hp-form-status');
   var submitBtn = document.getElementById('hp-form-submit-btn');
-  var msg = msgEl ? msgEl.value.trim() : '';
+  var msg  = msgEl  ? msgEl.value.trim() : '';
+  var type = typeEl ? typeEl.options[typeEl.selectedIndex].text : 'General Feedback';
   if (!msg) {
     if (statusEl) { statusEl.textContent = 'Please enter a message.'; statusEl.style.color = 'var(--accent)'; }
     return;
   }
-  var type    = typeEl ? typeEl.options[typeEl.selectedIndex].text : 'Feedback';
-  var subject = encodeURIComponent('[Apex Revenue] ' + type);
-  var body    = encodeURIComponent(msg);
-  window.open('mailto:support@apexrevenue.works?subject=' + subject + '&body=' + body);
-  if (statusEl) { statusEl.textContent = 'Opening email client…'; statusEl.style.color = 'var(--green)'; }
-  if (submitBtn) submitBtn.disabled = true;
-  setTimeout(function() {
-    if (msgEl) msgEl.value = '';
-    if (statusEl) statusEl.textContent = '';
-    if (submitBtn) submitBtn.disabled = false;
-  }, 3000);
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
+  if (statusEl)  { statusEl.textContent = ''; }
+  try {
+    await apexFetch('/functions/v1/submit-support', {
+      method: 'POST',
+      body: JSON.stringify({ type: type, message: msg })
+    });
+    if (msgEl)    msgEl.value = '';
+    if (statusEl) { statusEl.textContent = 'Message sent!'; statusEl.style.color = 'var(--green)'; }
+    setTimeout(function() { if (statusEl) statusEl.textContent = ''; }, 3000);
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = e.message || 'Failed to send — try again.'; statusEl.style.color = 'var(--accent)'; }
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Send'; }
+  }
 }
+
+// ── Admin universal invite link ──────────────────────────────────────────────
+
+var _apexAdminInviteUrl = null;
+
+async function apexGetUniversalInviteLink() {
+  var btn = document.getElementById('hp-admin-invite-gen-btn');
+  if (btn) { btn.disabled = true; btn.querySelector('span').textContent = 'Generating…'; }
+  try {
+    var session = await apexGetSession();
+    console.log('[ApexInvite] session before refresh:', session ? 'exists' : 'null', session ? { hasToken: !!session.access_token, hasRefresh: !!session.refresh_token } : '');
+    if (!session || !session.refresh_token) {
+      throw new Error('Session expired. Please sign out and sign back in.');
+    }
+    var refreshed = await apexRefreshSession();
+    console.log('[ApexInvite] refreshed session:', refreshed ? { hasToken: !!refreshed.access_token, exp: refreshed.expires_at } : 'FAILED');
+    // Re-read session after refresh to ensure we have the latest
+    session = await apexGetSession();
+    console.log('[ApexInvite] stored session after refresh:', session ? { hasToken: !!session.access_token, tokenStart: session.access_token ? session.access_token.substring(0, 20) + '...' : 'none' } : 'NULL');
+    if (!session || !session.access_token) {
+      throw new Error('Session expired. Please sign out and sign back in.');
+    }
+    var labelEl = document.getElementById('hp-admin-invite-label');
+    var label = labelEl ? labelEl.value.trim() : '';
+    var data = await apexEdgeFetch('/functions/v1/invite-link', {
+      access_token: session.access_token,
+      universal: true,
+      label: label || undefined
+    });
+    _apexAdminInviteUrl = data.url || ('https://apexrevenue.works/join?ref=' + data.code);
+    // Show the link
+    var linkRow  = document.getElementById('hp-admin-invite-link-row');
+    var linkText = document.getElementById('hp-admin-invite-link-text');
+    var shareRow = document.getElementById('hp-admin-invite-share-row');
+    var actions  = document.getElementById('hp-admin-invite-actions');
+    if (linkText) linkText.textContent  = _apexAdminInviteUrl;
+    if (linkRow)  linkRow.style.display = 'flex';
+    if (shareRow) shareRow.style.display = 'flex';
+    if (actions)  actions.style.display  = 'none';
+    // Clear label for next generation
+    if (labelEl) labelEl.value = '';
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.querySelector('span').textContent = 'Generate Universal Link'; }
+    var actions = document.getElementById('hp-admin-invite-actions');
+    if (actions) {
+      var errEl = actions.querySelector('.hp-invite-err');
+      if (!errEl) { errEl = document.createElement('div'); errEl.className = 'hp-invite-err'; actions.appendChild(errEl); }
+      errEl.textContent = e.message || 'Could not generate link — try again.';
+    }
+  }
+}
+
+function apexCopyAdminInviteLink() {
+  if (!_apexAdminInviteUrl) return;
+  navigator.clipboard.writeText(_apexAdminInviteUrl).then(function() {
+    var btn = document.getElementById('hp-admin-invite-copy-btn');
+    if (btn) { btn.textContent = 'Copied!'; setTimeout(function(){ btn.textContent = 'Copy'; }, 2000); }
+  }).catch(function() {});
+}
+
+function apexShareAdminInviteSMS() {
+  if (!_apexAdminInviteUrl) return;
+  var msg = encodeURIComponent('Join Apex Revenue — real-time earnings tracking, whale alerts, and AI-powered tip prompts for streamers: ' + _apexAdminInviteUrl);
+  window.open('sms:?body=' + msg);
+}
+
+function apexShareAdminInviteEmail() {
+  if (!_apexAdminInviteUrl) return;
+  var subject = encodeURIComponent('Join Apex Revenue');
+  var body = encodeURIComponent('Hey!\n\nCheck out Apex Revenue — real-time whale tracking, AI monetization prompts, and fan analytics for cam performers.\n\nSign up here:\n' + _apexAdminInviteUrl + '\n\nSee you there!');
+  window.open('mailto:?subject=' + subject + '&body=' + body);
+}
+
+// ── Personal invite link ────────────────────────────────────────────────────
 
 function apexCopyInviteLink() {
   if (!_apexInviteUrl) return;
@@ -1877,8 +2152,17 @@ function getSettingsPage() {
   <div class="set-saved" id="set-saved-msg">✓ Settings saved</div>
   <button class="set-btn" id="set-save-btn">Save Settings</button>
   <button class="set-btn ghost" id="set-clear-btn">Clear 30-day History</button>
+</div>
 
-  <div class="set-ver">Apex Revenue v0.5.1 · Creator Intelligence Engine</div>
+<div class="set-divider"></div>
+
+<div class="set-sec">
+  <div class="set-sec-lbl">Account</div>
+  <div id="set-account-email" style="font-size:11px;color:var(--muted);margin-bottom:10px;padding:0 2px"></div>
+  <button class="set-btn ghost" id="set-logout-btn" style="color:#e83e5a;border-color:rgba(232,62,90,.25)">Sign Out</button>
+</div>
+
+<div class="set-ver">Apex Revenue v0.6.1 · Creator Intelligence Engine</div>
 </div>`;
 }
 
@@ -1930,6 +2214,36 @@ function initSettings() {
       clearBtn.textContent = '✓ History cleared';
       clearBtn.style.color = 'var(--green)';
       setTimeout(function(){ clearBtn.textContent = 'Clear 30-day History'; clearBtn.style.color = ''; }, 2000);
+    });
+  }
+
+  // Show logged-in email
+  var accountEmail = document.getElementById('set-account-email');
+  if (accountEmail) {
+    apexGetSession().then(function(session) {
+      if (session && session.user && session.user.email) {
+        accountEmail.textContent = 'Signed in as ' + session.user.email;
+      } else {
+        accountEmail.textContent = 'Not signed in';
+      }
+    });
+  }
+
+  // Logout button
+  var logoutBtn = document.getElementById('set-logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function() {
+      logoutBtn.disabled = true;
+      logoutBtn.textContent = 'Signing out…';
+      apexSignOut().then(function() {
+        // Clear invite URL cache
+        _apexInviteUrl = null;
+        _apexAdminInviteUrl = null;
+        // Reload the overlay to show the auth screen
+        window.location.reload();
+      }).catch(function() {
+        window.location.reload();
+      });
     });
   }
 
