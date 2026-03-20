@@ -4,7 +4,7 @@
   "description": "Creator intelligence engine for cam performers. Real-time monetization prompts, whale tracking, fan leaderboards, and multi-platform support.",
   "private": true,
   "scripts": {
-    "build": "npx vite build && node -e \"const fs=require('fs');['manifest.json','overlay.js','overlay.html','overlay.css','apex-config.js','auth.js','content.js','recovery.html','recovery.js'].forEach(f=>fs.copyFileSync(f,'dist/'+f));fs.copyFileSync('node_modules/posthog-js/dist/array.full.no-external.js','dist/array.full.no-external.js');fs.copyFileSync('node_modules/posthog-js/dist/posthog-recorder.js','dist/posthog-recorder.js')\"",
+    "build": "npx vite build && node sync-edge.js",
     "watch": "npx vite build --watch"
   },
   "devDependencies": {
